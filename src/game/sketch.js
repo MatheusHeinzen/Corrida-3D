@@ -5,12 +5,14 @@ let car;
 let terrain = [];
 let cols, rows;
 let scl = 50; // Escala do terreno
+let p5Instance;
 
 export function setup(p5, canvasParentRef) {
-    p5.createCanvas(800, 600, p5.WEBGL).parent(canvasParentRef);
+    p5Instance = p5;
+    p5.createCanvas(p5.windowWidth, p5.windowHeight, p5.WEBGL).parent(canvasParentRef);
 
     // Gera terreno (largura, profundidade, escala)
-    [terrain, cols, rows] = generateTerrain(5000, 5000, scl, p5);
+    [terrain, cols, rows] = generateTerrain(2000, 2000, scl, p5);
 
     // Calcula altura inicial do carro sobre o terreno (centro do mapa)
     const centerX = Math.floor(cols / 2);
@@ -26,9 +28,9 @@ export function draw(p5) {
 
     p5.background(135, 206, 235); // Céu azul
 
-    // Luz direcional (sol)
+    // Luz ambiente e direcional para sombra suave
+    p5.ambientLight(80, 80, 80);
     p5.directionalLight(255, 255, 255, -1, -1, -0.5);
-    p5.ambientLight(100);
 
     // Posiciona câmera atrás e acima do carro
     updateCamera(p5);
@@ -74,7 +76,8 @@ function updateCamera(p5) {
 function drawTerrain(p5) {
     p5.push();
     p5.noStroke();
-    p5.fill(50, 180, 50); // Grama
+    // Terreno com cor mais contrastante
+    p5.fill(60, 200, 60); // Verde mais vivo
 
     for (let y = 0; y < rows - 1; y++) {
         p5.beginShape(p5.TRIANGLE_STRIP);
@@ -90,4 +93,54 @@ function drawTerrain(p5) {
         p5.endShape();
     }
     p5.pop();
+
+    // Desenha linhas de marcação para dar sensação de movimento
+    drawTrackLines(p5);
+}
+
+// Linhas brancas simulando uma pista central
+function drawTrackLines(p5) {
+    p5.push();
+    p5.stroke(255);
+    p5.strokeWeight(3);
+    p5.noFill();
+
+    // Linha central da pista (ziguezagueando pelo centro do terreno)
+    for (let y = 0; y < rows - 1; y += 2) {
+        let x = Math.floor(cols / 2);
+        let x1 = x * scl - cols * scl / 2;
+        let z1 = y * scl - rows * scl / 2;
+        let z2 = (y + 1) * scl - rows * scl / 2;
+        let y1 = terrain[x][y] + 1;
+        let y2 = terrain[x][y + 1] + 1;
+        p5.line(x1, y1, z1, x1, y2, z2);
+    }
+
+    // Linhas laterais (opcional)
+    p5.stroke(255, 255, 0, 120);
+    p5.strokeWeight(2);
+    for (let y = 0; y < rows - 1; y += 6) {
+        // Esquerda
+        let xL = Math.floor(cols * 0.25);
+        let x1L = xL * scl - cols * scl / 2;
+        let z1 = y * scl - rows * scl / 2;
+        let z2 = (y + 3) * scl - rows * scl / 2;
+        let y1L = terrain[xL][y] + 1;
+        let y2L = terrain[xL][y + 3] + 1;
+        p5.line(x1L, y1L, z1, x1L, y2L, z2);
+
+        // Direita
+        let xR = Math.floor(cols * 0.75);
+        let x1R = xR * scl - cols * scl / 2;
+        let y1R = terrain[xR][y] + 1;
+        let y2R = terrain[xR][y + 3] + 1;
+        p5.line(x1R, y1R, z1, x1R, y2R, z2);
+    }
+
+    p5.pop();
+}
+
+// Adicione esta função para o canvas acompanhar o tamanho da janela
+export function windowResized(p5) {
+    p5.resizeCanvas(p5.windowWidth, p5.windowHeight);
 }

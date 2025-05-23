@@ -7,11 +7,12 @@ export class Car {
         this.maxSpeed = 8; // Aumentado
         this.acceleration = 0.15;
         this.braking = 0.2; // Frenagem mais forte
-        this.steering = 0.06;
+        this.steering = 0.03;
         this.steeringReduction = 0.7; // Redução de esterçamento em baixa velocidade
         this.onGround = false;
         this.wheelAngle = 0; // Ângulo das rodas para animação
         this.driftFactor = 0; // Controle de derrapagem
+        this.roll = 0; // Inclinação lateral do carro
     }
 
     update(p5) {
@@ -41,14 +42,18 @@ export class Car {
             // Atualiza rotação do carro com efeito de derrapagem
             this.rotation.y += this.wheelAngle * speedFactor * (1 - this.driftFactor);
             
-            // Efeito de derrapagem em curvas fechadas
+            // Efeito de derrapagem em curvas fechadas (mais forte)
             if (Math.abs(this.wheelAngle) > 0.1 && speedFactor > 0.3) {
-                this.driftFactor = Math.min(this.driftFactor + 0.02, 0.4);
+                this.driftFactor = Math.min(this.driftFactor + 0.04, 0.6); // Drift mais forte
             } else {
                 this.driftFactor = Math.max(this.driftFactor - 0.01, 0);
             }
+
+            // Inclinação lateral (roll) proporcional à curva e velocidade
+            this.roll = -this.wheelAngle * this.speed * 0.7;
         } else {
             this.wheelAngle *= 0.9; // Retorna as rodas ao centro
+            this.roll *= 0.8; // Volta o carro ao plano
         }
 
         // Movimento baseado na rotação
@@ -78,10 +83,12 @@ export class Car {
         p5.translate(this.pos.x, this.pos.y, this.pos.z);
         p5.rotateY(this.rotation.y);
 
-        // Corpo do carro (com inclinação na derrapagem)
+        // Corpo do carro (com inclinação na derrapagem e roll)
         p5.push();
-        p5.rotateZ(this.driftFactor * this.wheelAngle * 0.3);
-        p5.fill(255, 0, 0);
+        // Inclinação lateral (roll) e inclinação de drift
+        p5.rotateZ(this.roll + this.driftFactor * this.wheelAngle * 0.3);
+        p5.specularMaterial(255, 0, 0); // Material com brilho para sombra
+        p5.shininess(30); // Suaviza o brilho
         p5.box(30, 15, 50);
         
         // Para-brisa
@@ -110,7 +117,9 @@ export class Car {
             
             // Rodas giram conforme velocidade
             p5.rotateX(-this.speed * 0.1);
-            
+
+            p5.specularMaterial(40); // Material escuro para sombra nas rodas
+            p5.shininess(10);
             p5.box(10, 5, 5);
             p5.pop();
         });
