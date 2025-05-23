@@ -11,7 +11,7 @@ export function setup(p5, canvasParentRef) {
 
     // Posiciona o carro na primeira coordenada da pista
     const start = track.points[0];  
-    car = new Car(start.x, start.y + 5, start.z, p5);
+    car = new Car(start.x, start.y - 10, start.z, p5);
 }
 
 

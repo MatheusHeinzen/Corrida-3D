@@ -2,26 +2,26 @@ export function createInterlagosLight(p5) {
     const SCALE = 300;
     const trackWidth = 250;
 
-    // Traçado com elevação (y)
+    // Traçado com elevação removida (y = 0)
     const points = [
         { x: 0, z: 0, y: 0 },           // Start/Finish
-        { x: 50, z: -30, y: 5 },        // S do Senna - Entrada
+        { x: 50, z: -30, y: 0 },        // S do Senna - Entrada
         { x: 90, z: -60, y: 0 },        // S do Senna - Saída
-        { x: 130, z: -40, y: 10 },      // Curva do Sol
-        { x: 170, z: 20, y: 15 },       // Reta oposta
-        { x: 150, z: 80, y: 5 },        // Descida do Lago
-        { x: 100, z: 100, y: -5 },      // Mergulho
-        { x: 50, z: 120, y: -10 },      // Pinheirinho
+        { x: 130, z: -40, y: 0 },       // Curva do Sol
+        { x: 170, z: 20, y: 0 },        // Reta oposta
+        { x: 150, z: 80, y: 0 },        // Descida do Lago
+        { x: 100, z: 100, y: 0 },       // Mergulho
+        { x: 50, z: 120, y: 0 },        // Pinheirinho
         { x: 0, z: 90, y: 0 },          // Bico de Pato
-        { x: -40, z: 50, y: 10 },       // Subida
-        { x: -60, z: 0, y: 20 },        // Junção
-        { x: -40, z: -40, y: 25 },      // Subida do Café
-        { x: 0, z: -60, y: 30 },        // Reta dos boxes
+        { x: -40, z: 50, y: 0 },        // Subida
+        { x: -60, z: 0, y: 0 },         // Junção
+        { x: -40, z: -40, y: 0 },       // Subida do Café
+        { x: 0, z: -60, y: 0 },         // Reta dos boxes
         { x: 0, z: 0, y: 0 }            // Fechamento
     ].map(p => ({
         x: p.x * SCALE,
         z: p.z * SCALE,
-        y: p.y * SCALE * 0.05   // Ajusta inclinação: elevação mais suave
+        y: 0 // Mantém o traçado plano
     }));
 
     function drawTrackSurface() {
@@ -99,6 +99,7 @@ export function createInterlagosLight(p5) {
     }
 
     function draw() {
+        drawGrass();
         drawTrackSurface();
         drawZebras();
     }
