@@ -4,7 +4,7 @@ export class Car {
         this.velocity = { x: 0, y: 0, z: 0 };
         this.rotation = { x: 0, y: 0, z: 0 };
         this.speed = 0;
-        this.maxSpeed = 8; // Aumentado
+        this.maxSpeed = 50; // Aumentado
         this.acceleration = 0.15;
         this.braking = 0.2; // Frenagem mais forte
         this.steering = 0.03;
@@ -15,7 +15,23 @@ export class Car {
         this.roll = 0; // Inclinação lateral do carro
     }
 
-    update(p5) {
+    getHeightAtPosition(p5, track) {
+        if (!track || !track.points) return this.pos.y; // Corrige bug se track não existir
+        // Encontra o ponto mais próximo na pista
+        let closest = track.points[0];
+        let minDist = Infinity;
+        for (let pt of track.points) {
+            const d = p5.dist(this.pos.x, this.pos.z, pt.x, pt.z);
+            if (d < minDist) {
+                minDist = d;
+                closest = pt;
+            }
+        }
+        return closest.y;
+    }
+
+
+    update(p5, track) {
         // Controles de aceleração/freio
         if (p5.keyIsDown(p5.UP_ARROW)) {
             this.speed += this.acceleration;
@@ -23,25 +39,27 @@ export class Car {
             this.speed = Math.max(this.speed - this.braking, -this.maxSpeed * 0.4);
         } else {
             // Atrito natural (mais lento quando desacelerando)
-            this.speed *= 0.92;
+            this.speed *= 0.99;
         }
 
         // Limita velocidade
         this.speed = Math.min(Math.max(this.speed, -this.maxSpeed * 0.4), this.maxSpeed);
 
-        // Controle de direção (só funciona quando em movimento)
+        // Controle de direção (mais curva em baixa, menos em alta velocidade)
         if (Math.abs(this.speed) > 0.1) {
             let steerInput = 0;
             if (p5.keyIsDown(p5.LEFT_ARROW)) steerInput -= 1;
             if (p5.keyIsDown(p5.RIGHT_ARROW)) steerInput += 1;
-            
-            // Reduz esterçamento em baixa velocidade
-            const speedFactor = Math.min(Math.abs(this.speed) / this.maxSpeed, 1);
-            this.wheelAngle = steerInput * this.steering * speedFactor;
-            
+
+            // Fator de curva: mais curva em baixa, menos em alta velocidade
+            const speedFactor = 1 - Math.min(Math.abs(this.speed) / this.maxSpeed, 1); // 1 em baixa, 0 em alta
+            const steeringEffect = this.steering * (0.5 + 1.5 * speedFactor); // 2x mais curva em baixa, 0.5x em alta
+
+            this.wheelAngle = steerInput * steeringEffect;
+
             // Atualiza rotação do carro com efeito de derrapagem
-            this.rotation.y += this.wheelAngle * speedFactor * (1 - this.driftFactor);
-            
+            this.rotation.y += this.wheelAngle * (1 - this.driftFactor);
+
             // Efeito de derrapagem em curvas fechadas (mais forte)
             if (Math.abs(this.wheelAngle) > 0.1 && speedFactor > 0.3) {
                 this.driftFactor = Math.min(this.driftFactor + 0.04, 0.6); // Drift mais forte
@@ -62,20 +80,11 @@ export class Car {
         this.pos.x += this.velocity.x;
         this.pos.z += this.velocity.z;
 
-        // Física de gravidade e chão
-        if (this.pos.y > 0) {
-            this.velocity.y -= 0.25; // Gravidade mais forte
-            this.pos.y += this.velocity.y;
-        } else {
-            this.pos.y = 0;
-            this.velocity.y = 0;
-            this.onGround = true;
-            
-            // Efeito de "suspensão" ao pousar
-            if (Math.abs(this.velocity.y) > 0.5) {
-                this.speed *= 0.8; // Perda de velocidade ao pular
-            }
-        }
+        // Ajusta altura do carro com base na pista
+        const targetY = this.getHeightAtPosition(p5, track);
+        const diffY = targetY - this.pos.y;
+        this.velocity.y = diffY * 0.2;  // Suaviza o ajuste vertical
+        this.pos.y += this.velocity.y;
     }
 
     display(p5) {
@@ -90,7 +99,7 @@ export class Car {
         p5.specularMaterial(255, 0, 0); // Material com brilho para sombra
         p5.shininess(30); // Suaviza o brilho
         p5.box(30, 15, 50);
-        
+
         // Para-brisa
         p5.fill(200, 200, 255, 150);
         p5.translate(0, -5, 10);
@@ -109,12 +118,12 @@ export class Car {
         wheels.forEach(wheel => {
             p5.push();
             p5.translate(wheel.x, wheel.y, wheel.z);
-            
+
             // Rodas dianteiras viram
             if (wheel.steer) {
                 p5.rotateY(this.wheelAngle);
             }
-            
+
             // Rodas giram conforme velocidade
             p5.rotateX(-this.speed * 0.1);
 
