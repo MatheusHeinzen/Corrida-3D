@@ -196,7 +196,6 @@ export class Car {
 
         // Detalhes do carro
         this.drawExhaust(p5);
-        this.drawSideDetails(p5);
 
         // Rodas
         this.drawWheels(p5);
@@ -221,77 +220,11 @@ export class Car {
         p5.pop();
     }
 
-    drawWindows(p5) {
-        p5.push();
-        p5.translate(0, -2, 0);
-        p5.specularMaterial(100, 100, 120, 150);
-        p5.shininess(80);
-
-        // Para-brisa
-        p5.push();
-        p5.translate(0, 5, -15);
-        p5.rotateX(Math.PI / 6);
-        p5.box(28, 1, 20);
-        p5.pop();
-
-        // Janelas laterais
-        p5.push();
-        p5.translate(0, 0, 0);
-        p5.box(38, 8, 40);
-        p5.pop();
-
-        // Vidro traseiro
-        p5.push();
-        p5.translate(0, 5, 25);
-        p5.rotateX(-Math.PI / 6);
-        p5.box(26, 1, 15);
-        p5.pop();
-
-        p5.pop();
-    }
-
-    drawLights(p5) {
-        // Faróis dianteiros
-        p5.push();
-        p5.translate(0, 0, -45);
-        p5.specularMaterial(50);
-        p5.shininess(30);
-        p5.box(30, 8, 5);
-
-        for (let x of [-12, 12]) {
-            p5.push();
-            p5.translate(x, 0, 3);
-            p5.specularMaterial(200, 200, 180);
-            p5.shininess(200);
-            p5.sphere(4);
-            p5.pop();
-        }
-        p5.pop();
-
-        // Luzes traseiras
-        p5.push();
-        p5.translate(0, 0, 45);
-        p5.specularMaterial(80, 0, 0);
-        p5.shininess(100);
-        p5.box(28, 6, 5);
-
-        for (let x of [-10, 10]) {
-            p5.push();
-            p5.translate(x, 0, 3);
-            p5.specularMaterial(200, 50, 50);
-            p5.shininess(150);
-            p5.sphere(3);
-            p5.pop();
-        }
-        p5.pop();
-    }
-
     drawExhaust(p5) {
         p5.push();
         p5.translate(0, 0, -31);
         p5.rotateX(Math.PI / 2);
         p5.specularMaterial(80);
-        p5.shininess(30);
 
         for (let x of [-8, 8]) {
             p5.push();
@@ -299,23 +232,6 @@ export class Car {
             p5.cylinder(2, 6);
             p5.pop();
         }
-        p5.pop();
-    }
-
-    drawSideDetails(p5) {
-        p5.push();
-        p5.translate(0, 0, 0);
-        p5.specularMaterial(180, 180, 180);
-        p5.shininess(100);
-        p5.pop();
-
-        // Entrada de ar traseira
-        p5.push();
-        p5.translate(15, 0, 15);
-        p5.rotateY(Math.PI / 2);
-        p5.specularMaterial(40);
-        p5.shininess(20);
-        p5.box(8, 4, 2);
         p5.pop();
     }
 
@@ -349,13 +265,6 @@ export class Car {
             p5.push();
             p5.fill(40, 40, 40);
             p5.cylinder(8, 4);
-            p5.pop();
-
-            // Aro esportivo
-            p5.push();
-            p5.translate(0, 0, 0.1);
-            p5.fill(180, 180, 200);
-            p5.cylinder(6, 3.8);
             p5.pop();
 
             // Detalhes do aro

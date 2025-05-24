@@ -9,9 +9,10 @@ let graphics3D;
 
 export function setup(p5, canvasParentRef) {
     font = p5.loadFont('/SuperBlackMarker.ttf');
-    const canvas = p5.createCanvas(800, 600).parent(canvasParentRef);
+    // Reduza a resolução do canvas para aliviar processamento
+    const canvas = p5.createCanvas(640, 480).parent(canvasParentRef);
 
-    graphics3D = p5.createGraphics(800, 600, p5.WEBGL);
+    graphics3D = p5.createGraphics(640, 480, p5.WEBGL);
 
     track = createInterlagosLight(graphics3D);
 
@@ -58,7 +59,7 @@ function drawScreenHUD(p5) {
     p5.push();
     p5.noStroke();
     p5.fill(255);
-    p5.textSize(28);
+    p5.textSize(20);
     p5.textFont(font);
     p5.textAlign(p5.LEFT, p5.TOP);
 
@@ -77,10 +78,16 @@ function drawScreenHUD(p5) {
     
     // Textos do HUD
     p5.text(`Voltas: ${car.laps}`, x, y);
-    p5.text(`Tempo atual: ${tempoAtual}`, x, y + 40);
-    p5.text(`Última volta: ${tempoUltima}`, x, y + 80);
-    p5.text(`Velocidade: ${Math.abs(car.speed*3).toFixed(1)}`, x, y + 120);
-    
+    p5.text(`Tempo atual: ${tempoAtual}`, x, y + 30);
+    p5.text(`Última volta: ${tempoUltima}`, x, y + 60);
+    p5.text(`Velocidade: ${Math.abs(car.speed*3).toFixed(1)}`, x, y + 90);
+
+    // FPS pequeno no canto superior esquerdo
+    p5.textSize(12);
+    p5.fill(180);
+    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.text(`FPS: ${Math.round(p5.frameRate())}`, 8, 4);
+
     p5.pop();
 }
 
@@ -105,7 +112,8 @@ function drawCheckpoints(pg) {
         pg.translate(0, 10, 0);
         pg.rotateX(Math.PI / 2);
         pg.rotateY(Math.PI / 2);
-        pg.torus(40, 4, 30, 12);
+        // Reduza a complexidade do torus (menos segmentos)
+        pg.torus(40, 4, 10, 6);
         pg.pop();
 
         pg.pop();
