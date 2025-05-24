@@ -43,9 +43,9 @@ export class Car {
 
     update(p5, track) {
         // Controles de aceleração/freio
-        if (p5.keyIsDown(p5.UP_ARROW)) {
+        if (p5.keyIsDown(87)) {
             this.speed += this.acceleration;
-        } else if (p5.keyIsDown(p5.DOWN_ARROW)) {
+        } else if (p5.keyIsDown(83)) {
             this.speed = Math.max(this.speed - this.braking, -this.maxSpeed * 0.4);
         } else {
             this.speed *= 0.99;
@@ -57,8 +57,8 @@ export class Car {
         // Controle de direção
         if (Math.abs(this.speed) > 0.1) {
             let steerInput = 0;
-            if (p5.keyIsDown(p5.LEFT_ARROW)) steerInput -= 1;
-            if (p5.keyIsDown(p5.RIGHT_ARROW)) steerInput += 1;
+            if (p5.keyIsDown(65)) steerInput -= 1;
+            if (p5.keyIsDown(68)) steerInput += 1;
 
             const speedFactor = 1 - Math.min(Math.abs(this.speed) / this.maxSpeed, 1);
             const steeringEffect = this.steering * (0.5 + 1.5 * speedFactor);

@@ -79,7 +79,7 @@ function drawScreenHUD(p5) {
     p5.text(`Voltas: ${car.laps}`, x, y);
     p5.text(`Tempo atual: ${tempoAtual}`, x, y + 40);
     p5.text(`Última volta: ${tempoUltima}`, x, y + 80);
-    p5.text(`Velocidade: ${Math.abs(car.speed).toFixed(1)}`, x, y + 120);
+    p5.text(`Velocidade: ${Math.abs(car.speed*3).toFixed(1)}`, x, y + 120);
     
     p5.pop();
 }
