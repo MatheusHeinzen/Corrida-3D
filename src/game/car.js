@@ -14,6 +14,17 @@ export class Car {
         this.driftFactor = 0;
         this.roll = 0;
         this.color = { r: 200, g: 30, b: 30 }; // Vermelho esportivo
+
+        // Adicione propriedades para checkpoint e voltas
+        this.laps = 0;
+        this.lastCheckpoint = 0;
+        this.checkpointPassed = [];
+        this.totalCheckpoints = 0;
+        this.finished = false;
+
+        // Adicione propriedades para controle de tempo de volta
+        this.lapStartTime = 0;
+        this.lastLapTime = 0;
     }
 
     getHeightAtPosition(p5, track) {
@@ -83,6 +94,13 @@ export class Car {
             this.pos.y = targetY + 15;
             this.velocity.y = 0;
         }
+
+        // Inicializa o tempo de volta na primeira chamada
+        if (this.lapStartTime === 0) {
+            this.lapStartTime = p5.millis();
+        }
+
+        this.updateCheckpoints(track, p5);
     }
 
     display(p5) {
@@ -93,23 +111,22 @@ export class Car {
 
         // Corpo principal do carro
         this.drawBody(p5);
-        
+
         // Detalhes do carro
         this.drawExhaust(p5);
         this.drawSideDetails(p5);
-        
+
         // Rodas
         this.drawWheels(p5);
-        
+
         p5.pop();
     }
 
     drawBody(p5) {
         p5.push();
-        p5.specularMaterial(this.color.r, this.color.g, this.color.b);
-        p5.shininess(150);
-        
-        // Centro
+        // Cor vermelha sólida, sem efeito metálico
+        p5.fill(180, 30, 30);
+        // Corpo principal do carro
         p5.push();
         p5.box(40, 12, 60);
         p5.pop();
@@ -118,7 +135,7 @@ export class Car {
         p5.translate(0, 10, -9);
         p5.box(38, 12, 40);
         p5.pop();
-        
+
         p5.pop();
     }
 
@@ -127,27 +144,27 @@ export class Car {
         p5.translate(0, -2, 0);
         p5.specularMaterial(100, 100, 120, 150);
         p5.shininess(80);
-        
+
         // Para-brisa
         p5.push();
         p5.translate(0, 5, -15);
-        p5.rotateX(Math.PI/6);
+        p5.rotateX(Math.PI / 6);
         p5.box(28, 1, 20);
         p5.pop();
-        
+
         // Janelas laterais
         p5.push();
         p5.translate(0, 0, 0);
         p5.box(38, 8, 40);
         p5.pop();
-        
+
         // Vidro traseiro
         p5.push();
         p5.translate(0, 5, 25);
-        p5.rotateX(-Math.PI/6);
+        p5.rotateX(-Math.PI / 6);
         p5.box(26, 1, 15);
         p5.pop();
-        
+
         p5.pop();
     }
 
@@ -158,7 +175,7 @@ export class Car {
         p5.specularMaterial(50);
         p5.shininess(30);
         p5.box(30, 8, 5);
-        
+
         for (let x of [-12, 12]) {
             p5.push();
             p5.translate(x, 0, 3);
@@ -168,14 +185,14 @@ export class Car {
             p5.pop();
         }
         p5.pop();
-        
+
         // Luzes traseiras
         p5.push();
         p5.translate(0, 0, 45);
         p5.specularMaterial(80, 0, 0);
         p5.shininess(100);
         p5.box(28, 6, 5);
-        
+
         for (let x of [-10, 10]) {
             p5.push();
             p5.translate(x, 0, 3);
@@ -190,10 +207,10 @@ export class Car {
     drawExhaust(p5) {
         p5.push();
         p5.translate(0, 0, -31);
-        p5.rotateX(Math.PI/2);
+        p5.rotateX(Math.PI / 2);
         p5.specularMaterial(80);
         p5.shininess(30);
-        
+
         for (let x of [-8, 8]) {
             p5.push();
             p5.translate(x, 0, 0);
@@ -213,7 +230,7 @@ export class Car {
         // Entrada de ar traseira
         p5.push();
         p5.translate(15, 0, 15);
-        p5.rotateY(Math.PI/2);
+        p5.rotateY(Math.PI / 2);
         p5.specularMaterial(40);
         p5.shininess(20);
         p5.box(8, 4, 2);
@@ -228,37 +245,95 @@ export class Car {
             { x: 20, y: 0, z: 25, steer: true }
         ];
 
+        // Use um acumulador para o giro das rodas, para garantir rotação contínua
+        if (this._wheelRotation === undefined) this._wheelRotation = 0;
+        // O valor 0.2 controla a velocidade de rotação visual, ajuste se necessário
+        this._wheelRotation += this.speed * -0.2;
+
         wheelPositions.forEach(wheel => {
             p5.push();
             p5.translate(wheel.x, wheel.y, wheel.z);
-            
 
-            // Posicionamento da roda
-            p5.rotateZ(Math.PI/2);
+            p5.rotateZ(Math.PI / 2);
 
             if (wheel.steer) {
-                p5.rotateX(this.wheelAngle*5);
+                p5.rotateX(this.wheelAngle * 5);
             }
 
-            p5.rotateY(this.speed * -0.2);
-            // Pneu
+            // Use o acumulador para girar a roda, assim nunca para
+            p5.rotateY(this._wheelRotation);
+
+            // Pneu cinza escuro
             p5.push();
-            p5.specularMaterial(20);
-            p5.shininess(5);
+            p5.fill(40, 40, 40);
             p5.cylinder(8, 4);
             p5.pop();
-            
+
             // Aro esportivo
             p5.push();
             p5.translate(0, 0, 0.1);
-            p5.specularMaterial(180, 180, 200);
-            p5.shininess(150);
+            p5.fill(180, 180, 200);
             p5.cylinder(6, 3.8);
             p5.pop();
-            
+
             // Detalhes do aro
-            
+
             p5.pop();
         });
+    }
+
+    // Chame este método no update do jogo
+    updateCheckpoints(track, p5) {
+        if (!track || !track.points) return;
+
+        // Inicializa array de checkpoints se necessário
+        if (this.totalCheckpoints !== track.points.length) {
+            this.totalCheckpoints = track.points.length;
+            this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
+            this.lastCheckpoint = -1; // Reset para -1 para garantir lógica correta
+        }
+
+        // Encontra checkpoint mais próximo
+        let closestIdx = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < track.points.length; i++) {
+            const pt = track.points[i];
+            const dist = p5.dist(this.pos.x, this.pos.z, pt.x, pt.z);
+            if (dist < minDist) {
+                minDist = dist;
+                closestIdx = i;
+            }
+        }
+
+        // Só marca checkpoint se estiver suficientemente perto
+        if (minDist < 120) {
+            // Lógica para primeiro checkpoint
+            if (this.lastCheckpoint === -1 && closestIdx === 0) {
+                this.lastCheckpoint = 0;
+                this.checkpointPassed[0] = true;
+                return;
+            }
+
+            // Verifica se é o próximo checkpoint esperado
+            const nextCheckpoint = (this.lastCheckpoint + 1) % this.totalCheckpoints;
+
+            if (closestIdx === nextCheckpoint) {
+                this.lastCheckpoint = nextCheckpoint;
+                this.checkpointPassed[nextCheckpoint] = true;
+
+                // Verifica se completou todos os checkpoints
+                if (this.checkpointPassed.every(Boolean)) {
+                    this.laps += 1;
+                    this.lastLapTime = (p5.millis() - this.lapStartTime) / 1000;
+                    this.lapStartTime = p5.millis();
+                    this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
+
+                    // Marca o checkpoint atual como passado para não travar
+                    this.checkpointPassed[this.lastCheckpoint] = true;
+
+                    console.log(`Volta completada! Voltas: ${this.laps}, Tempo: ${this.lastLapTime.toFixed(2)}s`);
+                }
+            }
+        }
     }
 }

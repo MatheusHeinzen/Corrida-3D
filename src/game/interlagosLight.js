@@ -1,5 +1,5 @@
 export function createInterlagosLight(p5) {
-    const SCALE = 300;
+    const SCALE = 250;
     const trackWidth = 250;
 
     // Traçado com elevação removida (y = 0)

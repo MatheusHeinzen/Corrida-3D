@@ -3,66 +3,144 @@ import { createInterlagosLight } from './interlagosLight';
 
 let car;
 let track;
+let font;
+let graphics3D;
+
 
 export function setup(p5, canvasParentRef) {
-    p5.createCanvas(800, 600, p5.WEBGL).parent(canvasParentRef);
+    font = p5.loadFont('/SuperBlackMarker.ttf');
+    const canvas = p5.createCanvas(800, 600).parent(canvasParentRef);
 
-    track = createInterlagosLight(p5);
+    graphics3D = p5.createGraphics(800, 600, p5.WEBGL);
 
-    // Posiciona o carro na primeira coordenada da pista
-    const start = track.points[0];  
-    car = new Car(start.x, start.y - 10, start.z, p5);
+    track = createInterlagosLight(graphics3D);
+
+    const start = track.points[0];
+    car = new Car(start.x, start.y - 10, start.z, graphics3D);
+
+    car.lapStartTime = p5.millis();
+    car.lastLapTime = 0;
+
+    // Garante foco para inputs globais apenas no canvas principal
+    if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
+        canvas.elt.tabIndex = 0;
+        canvas.elt.focus();
+    }
 }
-
 
 export function draw(p5) {
-    if (!car) return; // Garante que o carro foi inicializado
+    if (!graphics3D || !car || !track || !font) {
+        console.log('Aguardando inicialização...');
+        return;
+    }
 
-    p5.background(135, 206, 235); // Céu azul
+    // Céu azul escuro e menos saturado
+    graphics3D.background(40, 60, 90);
 
-    // Luz ambiente e direcional para sombra suave
-    p5.ambientLight(80, 80, 80);
-    p5.directionalLight(255, 255, 255, -1, -1, -0.5);
+    // Iluminação simples, sem sombras
+    graphics3D.ambientLight(70, 70, 80);
+    // Remova directionalLight e pointLight para evitar sombras e deixar mais leve
 
-    // Posiciona câmera atrás e acima do carro
-    updateCamera(p5);
+    updateCamera(graphics3D);
 
-    // Passe track para o update do carro
     car.update(p5, track);
-    car.display(p5);
+    car.display(graphics3D);
+
+    drawCheckpoints(graphics3D);
     track.draw();
+
+    p5.image(graphics3D, 0, 0);
+
+    drawScreenHUD(p5);
 }
 
-// Câmera em 3ª pessoa, atrás e acima do carro, olhando levemente para baixo
-function updateCamera(p5) {
-    // Configurações da câmera
-    let camDistance = 200;  // Distância atrás do carro
-    let camHeight = 90;     // Altura da câmera (positivo = acima do carro)
-    let lookAhead = 60;     // Quanto à frente a câmera olha
+function drawScreenHUD(p5) {
+    p5.push();
+    p5.noStroke();
+    p5.fill(255);
+    p5.textSize(28);
+    p5.textFont(font);
+    p5.textAlign(p5.LEFT, p5.TOP);
 
-    // Direção do carro (forwardX/Z apontam para onde o carro está indo)
+    // Calcula tempos
+    let tempoAtual = "--";
+    let tempoUltima = "--";
+    if (car.lapStartTime) {
+        tempoAtual = ((p5.millis() - car.lapStartTime) / 1000).toFixed(2) + "s";
+    }
+    if (car.lastLapTime > 0) {
+        tempoUltima = car.lastLapTime.toFixed(2) + "s";
+    }
+
+    // Posição do HUD
+    const x = 30, y = 30;
+    
+    // Textos do HUD
+    p5.text(`Voltas: ${car.laps}`, x, y);
+    p5.text(`Tempo atual: ${tempoAtual}`, x, y + 40);
+    p5.text(`Última volta: ${tempoUltima}`, x, y + 80);
+    p5.text(`Velocidade: ${Math.abs(car.speed).toFixed(1)}`, x, y + 120);
+    
+    p5.pop();
+}
+
+function drawCheckpoints(pg) {
+    if (!track || !track.points) return;
+    for (let i = 0; i < track.points.length; i++) {
+        const pt = track.points[i];
+        pg.push();
+        pg.translate(pt.x, pt.y + 30, pt.z);
+
+        // Cores mais escuras e menos saturadas para checkpoints
+        if (i === (car.lastCheckpoint + 1) % track.points.length) {
+            pg.fill(25, 80, 40, 180); // verde escuro e menos saturado
+        } else if (car.checkpointPassed[i]) {
+            pg.fill(50, 50, 50, 90); // cinza escuro translúcido
+        } else {
+            pg.fill(20, 40, 70, 120); // azul escuro e menos saturado
+        }
+
+        pg.noStroke();
+        pg.push();
+        pg.translate(0, 10, 0);
+        pg.rotateX(Math.PI / 2);
+        pg.rotateY(Math.PI / 2);
+        pg.torus(40, 4, 30, 12);
+        pg.pop();
+
+        pg.pop();
+    }
+}
+
+function updateCamera(pg) {
+    let camDistance = 150;
+    let camHeight = 70;
+    let lookAhead = 60;
+
     let forwardX = Math.sin(car.rotation.y);
     let forwardZ = Math.cos(car.rotation.y);
 
-    // Posição da câmera (atrás e acima do carro)
     let camX = car.pos.x - camDistance * forwardX;
-    let camY = car.pos.y + camHeight;  // Aumente este valor para câmera mais alta
+    let camY = car.pos.y + camHeight;
     let camZ = car.pos.z - camDistance * forwardZ;
 
-    // Ponto de mira (à frente do carro, ligeiramente acima do chão)
     let lookX = car.pos.x + lookAhead * forwardX;
-    let lookY = car.pos.y + 5;  // Ajuste este valor para olhar mais para baixo
+    let lookY = car.pos.y + 5;
     let lookZ = car.pos.z + lookAhead * forwardZ;
 
-    // Vetor "up" invertido para corrigir a orientação (0, -1, 0 faz a câmera olhar para baixo)
-    p5.camera(
-        camX, camY, camZ,  // Posição da câmera
-        lookX, lookY, lookZ,  // Ponto de mira
-        0, -1, 0  // ⚠️ Vetor "up" invertido (0, -1, 0) para olhar para baixo
-    );
+    pg.camera(camX, camY, camZ, lookX, lookY, lookZ, 0, -1, 0);
 }
 
-// Adicione esta função para o canvas acompanhar o tamanho da janela
 export function windowResized(p5) {
     p5.resizeCanvas(p5.windowWidth, p5.windowHeight);
+    if (graphics3D) {
+        graphics3D.resizeCanvas(p5.windowWidth, p5.windowHeight);
+    }
+}
+
+// Garanta que os inputs do teclado sejam globais
+export function keyPressed(p5) {
+    if (car && typeof car.keyPressed === 'function') {
+        car.keyPressed(p5);
+    }
 }
