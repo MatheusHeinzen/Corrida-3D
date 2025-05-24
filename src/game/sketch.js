@@ -93,31 +93,16 @@ function drawScreenHUD(p5) {
 
 function drawCheckpoints(pg) {
     if (!track || !track.points) return;
-    for (let i = 0; i < track.points.length; i++) {
-        const pt = track.points[i];
-        pg.push();
-        pg.translate(pt.x, pt.y + 30, pt.z);
 
-        // Cores mais escuras e menos saturadas para checkpoints
-        if (i === (car.lastCheckpoint + 1) % track.points.length) {
-            pg.fill(25, 80, 40, 180); // verde escuro e menos saturado
-        } else if (car.checkpointPassed[i]) {
-            pg.fill(50, 50, 50, 90); // cinza escuro translúcido
-        } else {
-            pg.fill(20, 40, 70, 120); // azul escuro e menos saturado
-        }
+    // Desenha apenas um quadrado azul no ponto inicial
+    const start = track.points[0];
 
-        pg.noStroke();
-        pg.push();
-        pg.translate(0, 10, 0);
-        pg.rotateX(Math.PI / 2);
-        pg.rotateY(Math.PI / 2);
-        // Reduza a complexidade do torus (menos segmentos)
-        pg.torus(40, 4, 10, 6);
-        pg.pop();
-
-        pg.pop();
-    }
+    pg.push();
+    pg.translate(start.x, start.y + 32, start.z);
+    pg.noStroke();
+    pg.fill(30, 120, 255);
+    pg.box(60, 6, 60);
+    pg.pop();
 }
 
 function updateCamera(pg) {

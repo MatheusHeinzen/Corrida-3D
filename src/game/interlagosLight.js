@@ -1,6 +1,7 @@
 export function createInterlagosLight(p5) {
     const SCALE = 250;
     const trackWidth = 250;
+    const zebraWidth = 30; // Largura da zebra
 
     // Traçado com elevação removida (y = 0)
     const points = [
@@ -26,69 +27,97 @@ export function createInterlagosLight(p5) {
 
     function drawTrackSurface() {
         p5.push();
-        p5.stroke(255, 0, 0);
-        p5.strokeWeight(2);
-
-        p5.fill(50);  // Asfalto cinza escuro
         p5.noStroke();
-        p5.beginShape(p5.TRIANGLE_STRIP);
 
+        // 1. Asfalto principal (preenche até a borda da zebra)
+        p5.fill(50); // asfalto cinza escuro
+        p5.beginShape();
+        // Borda externa (até o final da zebra)
         for (let i = 0; i < points.length; i++) {
             const p = points[i];
             const next = points[(i + 1) % points.length];
-
             const dx = next.x - p.x;
             const dz = next.z - p.z;
             const len = Math.sqrt(dx * dx + dz * dz);
-
             const nx = -dz / len;
             const nz = dx / len;
-
-            // Bordas esquerda e direita
-            p5.vertex(p.x + nx * trackWidth, p.y, p.z + nz * trackWidth);
-            p5.vertex(p.x - nx * trackWidth, p.y, p.z - nz * trackWidth);
+            // Borda externa (até o final da zebra)
+            p5.vertex(p.x + nx * (trackWidth + zebraWidth), p.y, p.z + nz * (trackWidth + zebraWidth));
         }
-        p5.endShape();
-        p5.pop();
-    }
+        // Borda interna (até o final da zebra)
+        for (let i = points.length - 1; i >= 0; i--) {
+            const p = points[i];
+            const prev = points[(i - 1 + points.length) % points.length];
+            const dx = prev.x - p.x;
+            const dz = prev.z - p.z;
+            const len = Math.sqrt(dx * dx + dz * dz);
+            const nx = -dz / len;
+            const nz = dx / len;
+            p5.vertex(p.x - nx * (trackWidth + zebraWidth), p.y, p.z - nz * (trackWidth + zebraWidth));
+        }
+        p5.endShape(p5.CLOSE);
 
-    function drawZebras() {
-        p5.push();
-        p5.strokeWeight(5);
+        // 2. Zebras externas e internas (faixa vermelha)
+        p5.fill(50); // vermelho zebra
+        p5.beginShape();
+        // Externa
         for (let i = 0; i < points.length; i++) {
             const p = points[i];
             const next = points[(i + 1) % points.length];
-
             const dx = next.x - p.x;
             const dz = next.z - p.z;
             const len = Math.sqrt(dx * dx + dz * dz);
-
             const nx = -dz / len;
             const nz = dx / len;
-
-            // Alterna cores
-            if (i % 2 === 0) {
-                p5.stroke(255, 0, 0);  // Vermelho
-            } else {
-                p5.stroke(255);        // Branco
-            }
-
-            p5.line(
-                p.x + nx * (trackWidth + 5), p.y, p.z + nz * (trackWidth + 5),
-                next.x + nx * (trackWidth + 5), next.y, next.z + nz * (trackWidth + 5)
-            );
-            p5.line(
-                p.x - nx * (trackWidth + 5), p.y, p.z - nz * (trackWidth + 5),
-                next.x - nx * (trackWidth + 5), next.y, next.z - nz * (trackWidth + 5)
-            );
+            // Borda externa (final da zebra)
+            p5.vertex(p.x + nx * (trackWidth + zebraWidth), p.y + 2, p.z + nz * (trackWidth + zebraWidth));
         }
+        // Externa (início da zebra)
+        for (let i = points.length - 1; i >= 0; i--) {
+            const p = points[i];
+            const prev = points[(i - 1 + points.length) % points.length];
+            const dx = prev.x - p.x;
+            const dz = prev.z - p.z;
+            const len = Math.sqrt(dx * dx + dz * dz);
+            const nx = -dz / len;
+            const nz = dx / len;
+            p5.vertex(p.x + nx * trackWidth, p.y + 2, p.z + nz * trackWidth);
+        }
+        p5.endShape(p5.CLOSE);
+
+        // Interna zebra
+        p5.beginShape();
+        // Interna (final da zebra)
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            const next = points[(i + 1) % points.length];
+            const dx = next.x - p.x;
+            const dz = next.z - p.z;
+            const len = Math.sqrt(dx * dx + dz * dz);
+            const nx = -dz / len;
+            const nz = dx / len;
+            p5.vertex(p.x - nx * (trackWidth + zebraWidth), p.y + 2, p.z - nz * (trackWidth + zebraWidth));
+        }
+        // Interna (início da zebra)
+        for (let i = points.length - 1; i >= 0; i--) {
+            const p = points[i];
+            const prev = points[(i - 1 + points.length) % points.length];
+            const dx = prev.x - p.x;
+            const dz = prev.z - p.z;
+            const len = Math.sqrt(dx * dx + dz * dz);
+            const nx = -dz / len;
+            const nz = dx / len;
+            p5.vertex(p.x - nx * trackWidth, p.y + 2, p.z - nz * trackWidth);
+        }
+        p5.endShape(p5.CLOSE);
+
         p5.pop();
     }
 
     function drawGrass() {
         p5.push();
-        p5.fill(34, 139, 34);  // Verde escuro
         p5.noStroke();
+        p5.fill(34, 139, 34);  // Verde escuro
         p5.beginShape();
         for (let i = 0; i < points.length; i++) {
             const p = points[i];
@@ -101,7 +130,6 @@ export function createInterlagosLight(p5) {
     function draw() {
         drawGrass();
         drawTrackSurface();
-        drawZebras();
     }
 
     return {
