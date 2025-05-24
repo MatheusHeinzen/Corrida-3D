@@ -47,6 +47,12 @@ export class Car {
             this.speed += this.acceleration;
         } else if (p5.keyIsDown(83)) {
             this.speed = Math.max(this.speed - this.braking, -this.maxSpeed * 0.4);
+        } else if (p5.keyIsDown(32)) {
+            if (this.speed > 0) {
+                this.speed = Math.max(this.speed - this.braking * 1.1, 0);
+            } else if (this.speed < 0) {
+                this.speed = Math.min(this.speed + this.braking * 2, 0);
+            }
         } else {
             this.speed *= 0.99;
         }
@@ -100,7 +106,83 @@ export class Car {
             this.lapStartTime = p5.millis();
         }
 
-        this.updateCheckpoints(track, p5);
+        // --- SISTEMA DE VOLTAS ROBUSTO ---
+        this.updateLapSystem(track, p5);
+    }
+
+    // Novo método robusto para voltas
+    updateLapSystem(track, p5) {
+        if (!track || !track.points) return;
+
+        // Inicializa checkpoints e tempos de passagem
+        if (this.totalCheckpoints !== track.points.length || !this.checkpointTimes) {
+            this.totalCheckpoints = track.points.length;
+            this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
+            this.checkpointTimes = Array(this.totalCheckpoints).fill(0);
+            this.lastCheckpoint = -1;
+            this.lastLapRegisterTime = 0; // novo: controla o cooldown da linha de chegada
+        }
+
+        // Atualiza/reset checkpoints se passou de 1 minuto
+        const now = p5.millis();
+        for (let i = 0; i < this.totalCheckpoints; i++) {
+            if (this.checkpointPassed[i] && now - this.checkpointTimes[i] > 60000) {
+                this.checkpointPassed[i] = false;
+                this.checkpointTimes[i] = 0;
+            }
+        }
+
+        // Encontra checkpoint mais próximo
+        let closestIdx = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < track.points.length; i++) {
+            const pt = track.points[i];
+            const dist = p5.dist(this.pos.x, this.pos.z, pt.x, pt.z);
+            if (dist < minDist) {
+                minDist = dist;
+                closestIdx = i;
+            }
+        }
+
+        // Só marca checkpoint se estiver suficientemente perto
+        if (minDist < 120) {
+            // Se for o primeiro checkpoint e nunca passou, inicia volta
+            if (this.lastCheckpoint === -1 && closestIdx === 0) {
+                this.lastCheckpoint = 0;
+                this.checkpointPassed[0] = true;
+                this.checkpointTimes[0] = now;
+                this.lastLapRegisterTime = now;
+                return;
+            }
+
+            // Próximo esperado
+            const nextCheckpoint = (this.lastCheckpoint + 1) % this.totalCheckpoints;
+
+            // Só aceita o próximo na ordem
+            if (closestIdx === nextCheckpoint && !this.checkpointPassed[nextCheckpoint]) {
+                this.lastCheckpoint = nextCheckpoint;
+                this.checkpointPassed[nextCheckpoint] = true;
+                this.checkpointTimes[nextCheckpoint] = now;
+            }
+
+            // Sempre que passar no checkpoint 0, só conta se já passou 15s desde a última volta
+            if (
+                closestIdx === 0 &&
+                this.lastCheckpoint !== -1 &&
+                now - (this.lastLapRegisterTime || 0) > 15000 // 15 segundos
+            ) {
+                this.laps += 1;
+                this.lastLapTime = (now - this.lapStartTime) / 1000;
+                this.lapStartTime = now;
+                this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
+                this.checkpointTimes = Array(this.totalCheckpoints).fill(0);
+                this.lastCheckpoint = 0;
+                this.checkpointPassed[0] = true;
+                this.checkpointTimes[0] = now;
+                this.lastLapRegisterTime = now;
+                // Opcional: console.log(`Volta completada! Voltas: ${this.laps}, Tempo: ${this.lastLapTime.toFixed(2)}s`);
+            }
+        }
     }
 
     display(p5) {
