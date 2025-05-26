@@ -53,6 +53,7 @@ export function draw(p5) {
     p5.image(graphics3D, 0, 0);
 
     drawScreenHUD(p5);
+    drawMinimap(p5, track, car);
 }
 
 function drawScreenHUD(p5) {
@@ -136,4 +137,32 @@ export function keyPressed(p5) {
     if (car && typeof car.keyPressed === 'function') {
         car.keyPressed(p5);
     }
+}
+
+function drawMinimap(p5, track, car) {
+    const minimapSize = 200; // Tamanho do minimapa em pixels
+    const padding = 20;      // Distância da borda da tela
+    const scale = 0.003;       // Fator de escala dos pontos reais -> minimapa
+
+    const offsetX = p5.width - minimapSize+80 - padding; 
+    const offsetY = p5.height - minimapSize-180 - padding; 
+
+    // Desenha a pista
+    p5.stroke(255);
+    p5.noFill();
+    p5.beginShape();
+    for (let pt of track.points) {
+        const x = offsetX + pt.x * scale;
+        const y = offsetY + pt.z * scale;
+        p5.vertex(x, y);
+    }
+    p5.endShape();
+
+    // Desenha o carro
+    const carX = offsetX + car.pos.x * scale;
+    const carY = offsetY + car.pos.z * scale;
+    p5.fill(255, 0, 0);
+    p5.circle(carX, carY, 8);
+
+    p5.pop();
 }
