@@ -16,7 +16,7 @@ export function setup(p5, canvasParentRef) {
 
     track = createInterlagosLight(graphics3D);
 
-    const start = track.points[0];
+    const start = track.points[1];
     car = new Car(start.x, start.y - 10, start.z, graphics3D);
 
     car.lapStartTime = p5.millis();
@@ -96,7 +96,7 @@ function drawCheckpoints(pg) {
     if (!track || !track.points) return;
 
     // Desenha apenas um quadrado azul no ponto inicial
-    const start = track.points[0];
+    const start = track.points[1];
 
     pg.push();
     pg.translate(start.x, start.y + 32, start.z);

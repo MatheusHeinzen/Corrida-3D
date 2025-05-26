@@ -6,25 +6,22 @@ export class Car {
         this.speed = 0;
         this.maxSpeed = 50;
         this.acceleration = 0.15;
-        this.braking = 0.5;
+        this.braking = 0.15;
         this.steering = 0.03;
         this.steeringReduction = 0.7;
         this.onGround = false;
         this.wheelAngle = 0;
         this.driftFactor = 0;
         this.roll = 0;
-        this.color = { r: 200, g: 30, b: 30 }; // Vermelho esportivo
+        this.color = { r: 200, g: 30, b: 30 };
 
-        // Adicione propriedades para checkpoint e voltas
+        // Voltas e tempo
         this.laps = 0;
-        this.lastCheckpoint = 0;
-        this.checkpointPassed = [];
-        this.totalCheckpoints = 0;
-        this.finished = false;
-
-        // Adicione propriedades para controle de tempo de volta
         this.lapStartTime = 0;
         this.lastLapTime = 0;
+
+        // Controle de passagem pelo checkpoint inicial
+        this.lastLapRegisterTime = 0;
     }
 
     getHeightAtPosition(p5, track) {
@@ -106,82 +103,55 @@ export class Car {
             this.lapStartTime = p5.millis();
         }
 
-        // --- SISTEMA DE VOLTAS ROBUSTO ---
-        this.updateLapSystem(track, p5);
+        // Sistema de checkpoint: só considera o ponto inicial
+        this.updateLapSystem(p5, track);
+
+        // Limite de pista: desacelera só se estiver fora do asfalto (distância do segmento mais próximo)
+        if (track && track.points && track.points.length > 1) {
+            let minDist = Infinity;
+            // Checa a menor distância do carro até qualquer segmento da pista
+            for (let i = 0; i < track.points.length - 1; i++) {
+                const a = track.points[i];
+                const b = track.points[i + 1];
+                const dist = pointToSegmentDistance(this.pos.x, this.pos.z, a.x, a.z, b.x, b.z);
+                if (dist < minDist) minDist = dist;
+            }
+            if (minDist > 250) { // 250 = largura da pista
+                this.speed *= 0.95;
+                let closestSeg = 0;
+                minDist = Infinity;
+                let closestPt = { x: 0, z: 0 };
+                for (let i = 0; i < track.points.length - 1; i++) {
+                    const a = track.points[i];
+                    const b = track.points[i + 1];
+                    const proj = closestPointOnSegment(this.pos.x, this.pos.z, a.x, a.z, b.x, b.z);
+                    const dist = p5.dist(this.pos.x, this.pos.z, proj.x, proj.z);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestSeg = i;
+                        closestPt = proj;
+                    }
+                }
+                let dir = p5.createVector(closestPt.x - this.pos.x, 0, closestPt.z - this.pos.z);
+                dir.setMag(0.5);
+                this.pos.x += dir.x;
+                this.pos.z += dir.z;
+            }
+        }
     }
 
-    // Novo método robusto para voltas
-    updateLapSystem(track, p5) {
-        if (!track || !track.points) return;
-
-        // Inicializa checkpoints e tempos de passagem
-        if (this.totalCheckpoints !== track.points.length || !this.checkpointTimes) {
-            this.totalCheckpoints = track.points.length;
-            this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
-            this.checkpointTimes = Array(this.totalCheckpoints).fill(0);
-            this.lastCheckpoint = -1;
-            this.lastLapRegisterTime = 0; // novo: controla o cooldown da linha de chegada
-        }
-
-        // Atualiza/reset checkpoints se passou de 1 minuto
+    updateLapSystem(p5, track) {
+        // Só existe um checkpoint: o ponto inicial
+        const start = track.points[1];
         const now = p5.millis();
-        for (let i = 0; i < this.totalCheckpoints; i++) {
-            if (this.checkpointPassed[i] && now - this.checkpointTimes[i] > 60000) {
-                this.checkpointPassed[i] = false;
-                this.checkpointTimes[i] = 0;
-            }
-        }
+        const dist = p5.dist(this.pos.x, this.pos.z, start.x, start.z);
 
-        // Encontra checkpoint mais próximo
-        let closestIdx = 0;
-        let minDist = Infinity;
-        for (let i = 0; i < track.points.length; i++) {
-            const pt = track.points[i];
-            const dist = p5.dist(this.pos.x, this.pos.z, pt.x, pt.z);
-            if (dist < minDist) {
-                minDist = dist;
-                closestIdx = i;
-            }
-        }
-
-        // Só marca checkpoint se estiver suficientemente perto
-        if (minDist < 120) {
-            // Se for o primeiro checkpoint e nunca passou, inicia volta
-            if (this.lastCheckpoint === -1 && closestIdx === 0) {
-                this.lastCheckpoint = 0;
-                this.checkpointPassed[0] = true;
-                this.checkpointTimes[0] = now;
-                this.lastLapRegisterTime = now;
-                return;
-            }
-
-            // Próximo esperado
-            const nextCheckpoint = (this.lastCheckpoint + 1) % this.totalCheckpoints;
-
-            // Só aceita o próximo na ordem
-            if (closestIdx === nextCheckpoint && !this.checkpointPassed[nextCheckpoint]) {
-                this.lastCheckpoint = nextCheckpoint;
-                this.checkpointPassed[nextCheckpoint] = true;
-                this.checkpointTimes[nextCheckpoint] = now;
-            }
-
-            // Sempre que passar no checkpoint 0, só conta se já passou 15s desde a última volta
-            if (
-                closestIdx === 0 &&
-                this.lastCheckpoint !== -1 &&
-                now - (this.lastLapRegisterTime || 0) > 15000 // 15 segundos
-            ) {
-                this.laps += 1;
-                this.lastLapTime = (now - this.lapStartTime) / 1000;
-                this.lapStartTime = now;
-                this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
-                this.checkpointTimes = Array(this.totalCheckpoints).fill(0);
-                this.lastCheckpoint = 0;
-                this.checkpointPassed[0] = true;
-                this.checkpointTimes[0] = now;
-                this.lastLapRegisterTime = now;
-                // Opcional: console.log(`Volta completada! Voltas: ${this.laps}, Tempo: ${this.lastLapTime.toFixed(2)}s`);
-            }
+        // Só conta a volta se estiver suficientemente perto e passou 15s desde a última
+        if (dist < 70 && now - (this.lastLapRegisterTime || 0) > 15000) {
+            this.laps += 1;
+            this.lastLapTime = (now - this.lapStartTime) / 1000;
+            this.lapStartTime = now;
+            this.lastLapRegisterTime = now;
         }
     }
 
@@ -189,15 +159,10 @@ export class Car {
         p5.push();
         p5.translate(this.pos.x, this.pos.y, this.pos.z);
         p5.rotateY(this.rotation.y);
-        p5.rotateZ(this.roll * 0.01); // Aplica inclinação lateral
+        p5.rotateZ(this.roll * 0.05);
 
-        // Corpo principal do carro
         this.drawBody(p5);
-
-        // Detalhes do carro
         this.drawExhaust(p5);
-
-        // Rodas
         this.drawWheels(p5);
 
         p5.pop();
@@ -205,9 +170,7 @@ export class Car {
 
     drawBody(p5) {
         p5.push();
-        // Cor vermelha sólida, sem efeito metálico
         p5.fill(180, 30, 30);
-        // Corpo principal do carro
         p5.push();
         p5.box(40, 12, 60);
         p5.pop();
@@ -223,7 +186,6 @@ export class Car {
     drawExhaust(p5) {
         p5.push();
         p5.translate(0, 0, -31);
-        p5.rotateX(Math.PI / 2);
         p5.specularMaterial(80);
 
         for (let x of [-8, 8]) {
@@ -243,9 +205,7 @@ export class Car {
             { x: 20, y: 0, z: 25, steer: true }
         ];
 
-        // Use um acumulador para o giro das rodas, para garantir rotação contínua
         if (this._wheelRotation === undefined) this._wheelRotation = 0;
-        // O valor 0.2 controla a velocidade de rotação visual, ajuste se necessário
         this._wheelRotation += this.speed * -0.2;
 
         wheelPositions.forEach(wheel => {
@@ -258,7 +218,6 @@ export class Car {
                 p5.rotateX(this.wheelAngle * 5);
             }
 
-            // Use o acumulador para girar a roda, assim nunca para
             p5.rotateY(this._wheelRotation);
 
             // Pneu cinza escuro
@@ -267,64 +226,39 @@ export class Car {
             p5.cylinder(8, 4);
             p5.pop();
 
-            // Detalhes do aro
-
             p5.pop();
         });
     }
+}
 
-    // Chame este método no update do jogo
-    updateCheckpoints(track, p5) {
-        if (!track || !track.points) return;
+// Função utilitária: distância ponto-segmento 2D
+function pointToSegmentDistance(px, pz, x1, z1, x2, z2) {
+    const vx = x2 - x1;
+    const vz = z2 - z1;
+    const wx = px - x1;
+    const wz = pz - z1;
+    const c1 = vx * wx + vz * wz;
+    if (c1 <= 0) return Math.sqrt(wx * wx + wz * wz);
+    const c2 = vx * vx + vz * vz;
+    if (c2 <= c1) return Math.sqrt((px - x2) ** 2 + (pz - z2) ** 2);
+    const b = c1 / c2;
+    const bx = x1 + b * vx;
+    const bz = z1 + b * vz;
+    return Math.sqrt((px - bx) ** 2 + (pz - bz) ** 2);
+}
 
-        // Inicializa array de checkpoints se necessário
-        if (this.totalCheckpoints !== track.points.length) {
-            this.totalCheckpoints = track.points.length;
-            this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
-            this.lastCheckpoint = -1; // Reset para -1 para garantir lógica correta
-        }
-
-        // Encontra checkpoint mais próximo
-        let closestIdx = 0;
-        let minDist = Infinity;
-        for (let i = 0; i < track.points.length; i++) {
-            const pt = track.points[i];
-            const dist = p5.dist(this.pos.x, this.pos.z, pt.x, pt.z);
-            if (dist < minDist) {
-                minDist = dist;
-                closestIdx = i;
-            }
-        }
-
-        // Só marca checkpoint se estiver suficientemente perto
-        if (minDist < 120) {
-            // Lógica para primeiro checkpoint
-            if (this.lastCheckpoint === -1 && closestIdx === 0) {
-                this.lastCheckpoint = 0;
-                this.checkpointPassed[0] = true;
-                return;
-            }
-
-            // Verifica se é o próximo checkpoint esperado
-            const nextCheckpoint = (this.lastCheckpoint + 1) % this.totalCheckpoints;
-
-            if (closestIdx === nextCheckpoint) {
-                this.lastCheckpoint = nextCheckpoint;
-                this.checkpointPassed[nextCheckpoint] = true;
-
-                // Verifica se completou todos os checkpoints
-                if (this.checkpointPassed.every(Boolean)) {
-                    this.laps += 1;
-                    this.lastLapTime = (p5.millis() - this.lapStartTime) / 1000;
-                    this.lapStartTime = p5.millis();
-                    this.checkpointPassed = Array(this.totalCheckpoints).fill(false);
-
-                    // Marca o checkpoint atual como passado para não travar
-                    this.checkpointPassed[this.lastCheckpoint] = true;
-
-                    console.log(`Volta completada! Voltas: ${this.laps}, Tempo: ${this.lastLapTime.toFixed(2)}s`);
-                }
-            }
-        }
-    }
+// Função utilitária: ponto mais próximo no segmento
+function closestPointOnSegment(px, pz, x1, z1, x2, z2) {
+    const vx = x2 - x1;
+    const vz = z2 - z1;
+    const wx = px - x1;
+    const wz = pz - z1;
+    const c1 = vx * wx + vz * wz;
+    const c2 = vx * vx + vz * vz;
+    let b = 0;
+    if (c2 > 0) b = Math.max(0, Math.min(1, c1 / c2));
+    return {
+        x: x1 + b * vx,
+        z: z1 + b * vz
+    };
 }
