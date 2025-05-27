@@ -1,6 +1,7 @@
 export class Car {
-    constructor(x, y, z, p5) {
+    constructor(x, y, z, p5, playerId = null) {
         this.pos = { x, y, z };
+        this.playerId = playerId;
         this.velocity = { x: 0, y: 0, z: 0 };
         this.rotation = { x: 0, y: 90, z: 0 };
         this.speed = 0;
@@ -38,13 +39,15 @@ export class Car {
         return closest.y;
     }
 
-    update(p5, track) {
+    // Remove keyPressed(), controles agora são externos via "inputs"
+    update(p5, track, inputs = {}) {
+        // inputs: { up, down, left, right, handbrake }
         // Controles de aceleração/freio
-        if (p5.keyIsDown(87)) {
+        if (inputs.up) {
             this.speed += this.acceleration;
-        } else if (p5.keyIsDown(83)) {
+        } else if (inputs.down) {
             this.speed = Math.max(this.speed - this.braking, -this.maxSpeed * 0.4);
-        } else if (p5.keyIsDown(32)) {
+        } else if (inputs.handbrake) {
             if (this.speed > 0) {
                 this.speed = Math.max(this.speed - this.braking * 1.1, 0);
             } else if (this.speed < 0) {
@@ -58,11 +61,11 @@ export class Car {
         this.speed = Math.min(Math.max(this.speed, -this.maxSpeed * 0.4), this.maxSpeed);
 
         // Controle de direção
-        if (Math.abs(this.speed) > 0.1) {
-            let steerInput = 0;
-            if (p5.keyIsDown(65)) steerInput -= 1;
-            if (p5.keyIsDown(68)) steerInput += 1;
+        let steerInput = 0;
+        if (inputs.left) steerInput -= 1;
+        if (inputs.right) steerInput += 1;
 
+        if (Math.abs(this.speed) > 0.1) {
             const speedFactor = 1 - Math.min(Math.abs(this.speed) / this.maxSpeed, 1);
             const steeringEffect = this.steering * (0.5 + 1.5 * speedFactor);
 
@@ -109,14 +112,13 @@ export class Car {
         // Limite de pista: desacelera só se estiver fora do asfalto (distância do segmento mais próximo)
         if (track && track.points && track.points.length > 1) {
             let minDist = Infinity;
-            // Checa a menor distância do carro até qualquer segmento da pista
             for (let i = 0; i < track.points.length - 1; i++) {
                 const a = track.points[i];
                 const b = track.points[i + 1];
                 const dist = pointToSegmentDistance(this.pos.x, this.pos.z, a.x, a.z, b.x, b.z);
                 if (dist < minDist) minDist = dist;
             }
-            if (minDist > 250) { // 250 = largura da pista
+            if (minDist > 250) {
                 this.speed *= 0.95;
                 let closestSeg = 0;
                 minDist = Infinity;
