@@ -10,9 +10,9 @@ let graphics3D;
 export function setup(p5, canvasParentRef) {
     font = p5.loadFont('/SuperBlackMarker.ttf');
     // Reduza a resolução do canvas para aliviar processamento
-    const canvas = p5.createCanvas(640, 480).parent(canvasParentRef);
+    const canvas = p5.createCanvas(854, 480).parent(canvasParentRef);
 
-    graphics3D = p5.createGraphics(640, 480, p5.WEBGL);
+    graphics3D = p5.createGraphics(854, 480, p5.WEBGL);
 
     track = createInterlagosLight(graphics3D);
 
