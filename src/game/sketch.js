@@ -1,146 +1,123 @@
 import { Car } from './car';
-import { generateTerrain } from './terrain';
+// import { createInterlagosLight } from './interlagosLight';
 
 let car;
-let terrain = [];
-let cols, rows;
-let scl = 50; // Escala do terreno
-let p5Instance;
+let font;
+let graphics3D;
+
+// Variáveis para câmera livre
+let camYaw = 0;
+let camPitch = 0;
+let lastMouseX = null;
+let lastMouseY = null;
+let mouseDragging = false;
 
 export function setup(p5, canvasParentRef) {
-    p5Instance = p5;
-    p5.createCanvas(p5.windowWidth, p5.windowHeight, p5.WEBGL).parent(canvasParentRef);
+    font = p5.loadFont('/SuperBlackMarker.ttf');
+    const canvas = p5.createCanvas(640, 480).parent(canvasParentRef);
 
-    // Gera terreno (largura, profundidade, escala)
-    [terrain, cols, rows] = generateTerrain(2000, 2000, scl, p5);
+    graphics3D = p5.createGraphics(640, 480, p5.WEBGL);
 
-    // Calcula altura inicial do carro sobre o terreno (centro do mapa)
-    const centerX = Math.floor(cols / 2);
-    const centerY = Math.floor(rows);
-    const terrainY = terrain[centerX][centerY];
+    // track = createInterlagosLight(graphics3D);
+    // Para teste, não usa pista
+    car = new Car(0, 0, 0, graphics3D);
 
-    // Inicializa carro (posição X, Y, Z)
-    car = new Car(0, terrainY + 1, 0, p5); // 15 para garantir que fique acima do solo
+    if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
+        canvas.elt.tabIndex = 0;
+        canvas.elt.focus();
+    }
+
+    // Eventos para mouse drag (câmera livre)
+    p5.canvas.onmousedown = (e) => {
+        mouseDragging = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    };
+    p5.canvas.onmouseup = () => {
+        mouseDragging = false;
+    };
+    p5.canvas.onmouseleave = () => {
+        mouseDragging = false;
+    };
+    p5.canvas.onmousemove = (e) => {
+        if (mouseDragging) {
+            let dx = e.clientX - lastMouseX;
+            let dy = e.clientY - lastMouseY;
+            camYaw += dx * 0.01;
+            camPitch += dy * 0.01;
+            camPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, camPitch));
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        }
+    };
 }
 
 export function draw(p5) {
-    if (!car) return; // Garante que o carro foi inicializado
+    if (!graphics3D || !car || !font) {
+        console.log('Aguardando inicialização...');
+        return;
+    }
 
-    p5.background(135, 206, 235); // Céu azul
+    graphics3D.background(40, 60, 90);
+    graphics3D.ambientLight(70, 70, 80);
 
-    // Luz ambiente e direcional para sombra suave
-    p5.ambientLight(80, 80, 80);
-    p5.directionalLight(255, 255, 255, -1, -1, -0.5);
+    updateCamera(graphics3D);
 
-    // Posiciona câmera atrás e acima do carro
-    updateCamera(p5);
-
-    // Desenha terreno
-    drawTerrain(p5);
-
-    // Atualiza e desenha carro
     car.update(p5);
-    car.display(p5);
+    car.display(graphics3D);
+
+    p5.image(graphics3D, 0, 0);
+
+    drawScreenHUD(p5);
 }
 
-// Câmera em 3ª pessoa, atrás e acima do carro, olhando levemente para baixo
-function updateCamera(p5) {
-    // Configurações da câmera
-    let camDistance = 180;  // Distância atrás do carro
-    let camHeight = 70;     // Altura da câmera (positivo = acima do carro)
-    let lookAhead = 50;     // Quanto à frente a câmera olha
+function drawScreenHUD(p5) {
+    p5.push();
+    p5.noStroke();
+    p5.fill(255);
+    p5.textSize(20);
+    p5.textFont(font);
+    p5.textAlign(p5.LEFT, p5.TOP);
 
-    // Direção do carro (forwardX/Z apontam para onde o carro está indo)
-    let forwardX = Math.sin(car.rotation.y);
-    let forwardZ = Math.cos(car.rotation.y);
+    // Posição do HUD
+    const x = 30, y = 30;
+    p5.text(`Pos: (${car.pos.x.toFixed(1)}, ${car.pos.z.toFixed(1)})`, x, y);
+    p5.text(`Velocidade: ${Math.abs(car.speed*3).toFixed(1)}`, x, y + 30);
 
-    // Posição da câmera (atrás e acima do carro)
-    let camX = car.pos.x - camDistance * forwardX;
-    let camY = car.pos.y + camHeight;  // Aumente este valor para câmera mais alta
-    let camZ = car.pos.z - camDistance * forwardZ;
+    // FPS pequeno no canto superior esquerdo
+    p5.textSize(12);
+    p5.fill(180);
+    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.text(`FPS: ${Math.round(p5.frameRate())}`, 8, 4);
 
-    // Ponto de mira (à frente do carro, ligeiramente acima do chão)
-    let lookX = car.pos.x + lookAhead * forwardX;
-    let lookY = car.pos.y + 5;  // Ajuste este valor para olhar mais para baixo
-    let lookZ = car.pos.z + lookAhead * forwardZ;
+    p5.pop();
+}
 
-    // Vetor "up" invertido para corrigir a orientação (0, -1, 0 faz a câmera olhar para baixo)
-    p5.camera(
-        camX, camY, camZ,  // Posição da câmera
-        lookX, lookY, lookZ,  // Ponto de mira
-        0, -1, 0  // ⚠️ Vetor "up" invertido (0, -1, 0) para olhar para baixo
+function updateCamera(pg) {
+    // Câmera livre controlada pelo mouse
+    let camDistance = 200;
+    let camHeight = 60;
+
+    let camX = car.pos.x + camDistance * Math.sin(camYaw) * Math.cos(camPitch);
+    let camY = car.pos.y + camHeight + camDistance * Math.sin(camPitch);
+    let camZ = car.pos.z + camDistance * Math.cos(camYaw) * Math.cos(camPitch);
+
+    pg.camera(
+        camX, camY, camZ,
+        car.pos.x, car.pos.y, car.pos.z,
+        0, -1, 0
     );
 }
 
-// Renderiza o terreno
-function drawTerrain(p5) {
-    p5.push();
-    p5.noStroke();
-    // Terreno com cor mais contrastante
-    p5.fill(60, 200, 60); // Verde mais vivo
-
-    for (let y = 0; y < rows - 1; y++) {
-        p5.beginShape(p5.TRIANGLE_STRIP);
-        for (let x = 0; x < cols; x++) {
-            let x1 = x * scl - cols * scl / 2;
-            let z1 = y * scl - rows * scl / 2;
-            let x2 = x * scl - cols * scl / 2;
-            let z2 = (y + 1) * scl - rows * scl / 2;
-
-            p5.vertex(x1, terrain[x][y], z1);
-            p5.vertex(x2, terrain[x][y + 1], z2);
-        }
-        p5.endShape();
-    }
-    p5.pop();
-
-    // Desenha linhas de marcação para dar sensação de movimento
-    drawTrackLines(p5);
-}
-
-// Linhas brancas simulando uma pista central
-function drawTrackLines(p5) {
-    p5.push();
-    p5.stroke(255);
-    p5.strokeWeight(3);
-    p5.noFill();
-
-    // Linha central da pista (ziguezagueando pelo centro do terreno)
-    for (let y = 0; y < rows - 1; y += 2) {
-        let x = Math.floor(cols / 2);
-        let x1 = x * scl - cols * scl / 2;
-        let z1 = y * scl - rows * scl / 2;
-        let z2 = (y + 1) * scl - rows * scl / 2;
-        let y1 = terrain[x][y] + 1;
-        let y2 = terrain[x][y + 1] + 1;
-        p5.line(x1, y1, z1, x1, y2, z2);
-    }
-
-    // Linhas laterais (opcional)
-    p5.stroke(255, 255, 0, 120);
-    p5.strokeWeight(2);
-    for (let y = 0; y < rows - 1; y += 6) {
-        // Esquerda
-        let xL = Math.floor(cols * 0.25);
-        let x1L = xL * scl - cols * scl / 2;
-        let z1 = y * scl - rows * scl / 2;
-        let z2 = (y + 3) * scl - rows * scl / 2;
-        let y1L = terrain[xL][y] + 1;
-        let y2L = terrain[xL][y + 3] + 1;
-        p5.line(x1L, y1L, z1, x1L, y2L, z2);
-
-        // Direita
-        let xR = Math.floor(cols * 0.75);
-        let x1R = xR * scl - cols * scl / 2;
-        let y1R = terrain[xR][y] + 1;
-        let y2R = terrain[xR][y + 3] + 1;
-        p5.line(x1R, y1R, z1, x1R, y2R, z2);
-    }
-
-    p5.pop();
-}
-
-// Adicione esta função para o canvas acompanhar o tamanho da janela
 export function windowResized(p5) {
     p5.resizeCanvas(p5.windowWidth, p5.windowHeight);
+    if (graphics3D) {
+        graphics3D.resizeCanvas(p5.windowWidth, p5.windowHeight);
+    }
+}
+
+export function keyPressed(p5) {
+    if (car && typeof car.keyPressed === 'function') {
+        car.keyPressed(p5);
+    }
 }
