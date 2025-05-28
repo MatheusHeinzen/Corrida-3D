@@ -11,7 +11,7 @@ let roomId = "race1";
 let playerId = Math.random().toString(36).substring(7);
 
 export function setup(p5, canvasParentRef) {
-    font = p5.loadFont('/SuperBlackMarker.ttf');
+    font = p5.loadFont(process.env.PUBLIC_URL + '/SuperBlackMarker.ttf');
     const canvas = p5.createCanvas(854, 480).parent(canvasParentRef);
 
     graphics3D = p5.createGraphics(854, 480, p5.WEBGL);
