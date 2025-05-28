@@ -1,4 +1,5 @@
-import { joinRoom, updatePlayer, syncRoom } from './firebase/firebaseActions';
+import { getDatabase, ref, set, onValue, remove } from "firebase/database";
+import { v4 as uuidv4 } from "uuid"; // npm install uuid
 import { Car } from './game/car';
 import { createInterlagosLight } from './game/interlagosLight';
 
@@ -7,8 +8,18 @@ let otherCars = {};
 let track;
 let font;
 let graphics3D;
+let playerId = null;
 let roomId = "race1";
-let playerId = Math.random().toString(36).substring(7);
+let db = null;
+
+function getOrCreatePlayerId() {
+    let id = sessionStorage.getItem('playerId');
+    if (!id) {
+        id = uuidv4();
+        sessionStorage.setItem('playerId', id);
+    }
+    return id;
+}
 
 export function setup(p5, canvasParentRef) {
     font = p5.loadFont(process.env.PUBLIC_URL + '/SuperBlackMarker.ttf');
@@ -18,38 +29,12 @@ export function setup(p5, canvasParentRef) {
 
     track = createInterlagosLight(graphics3D);
 
+    playerId = getOrCreatePlayerId();
     const start = track.points[1];
     car = new Car(start.x, start.y - 10, start.z, p5, playerId);
+    car.name = "Player " + playerId.substring(0, 5);
 
-    // Entra na sala e sincroniza multiplayer
-    joinRoom(roomId, playerId, {
-        name: "Player " + playerId,
-        position: { x: car.pos.x, y: car.pos.y, z: car.pos.z },
-        rotationY: car.rotation.y,
-        speed: 0,
-        laps: 0
-    });
-
-    syncRoom(roomId, (roomData) => {
-        if (!roomData) return;
-        for (const [id, data] of Object.entries(roomData.players)) {
-            if (id !== playerId) {
-                if (!otherCars[id]) {
-                    otherCars[id] = new Car(data.position.x, data.position.y, data.position.z, p5, id);
-                }
-                otherCars[id].pos = { ...data.position };
-                otherCars[id].rotation.y = data.rotationY;
-                otherCars[id].speed = data.speed;
-                otherCars[id].laps = data.laps;
-            }
-        }
-        // Remove carros de jogadores que saíram
-        for (const id in otherCars) {
-            if (!roomData.players[id]) {
-                delete otherCars[id];
-            }
-        }
-    });
+    setupFirebase();
 
     if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
         canvas.elt.tabIndex = 0;
@@ -57,7 +42,53 @@ export function setup(p5, canvasParentRef) {
     }
 }
 
+function setupFirebase() {
+    db = getDatabase();
+
+    // Troque 'cars' por 'players' para bater com o database
+    const carRef = ref(db, `rooms/${roomId}/players/${playerId}`);
+    const start = track.points[1];
+    const initialCar = {
+        name: car.name,
+        position: { x: start.x, y: start.y - 10, z: start.z },
+        rotationY: 0,
+        speed: 0,
+        laps: 0
+    };
+    set(carRef, initialCar);
+
+    window.addEventListener("beforeunload", () => {
+        remove(carRef);
+    });
+
+    // Troque 'cars' por 'players' aqui também
+    const carsRef = ref(db, `rooms/${roomId}/players`);
+    onValue(carsRef, (snapshot) => {
+        const allCars = snapshot.val() || {};
+        delete allCars[playerId];
+        otherCars = allCars;
+    });
+}
+
+// Exemplo de função para atualizar o próprio carro
+function updateMyCar(newData) {
+    if (!db || !playerId) return;
+    // Troque 'cars' por 'players'
+    const carRef = ref(db, `rooms/${roomId}/players/${playerId}`);
+    set(carRef, {
+        name: car.name || ("Player " + playerId.substring(0, 5)), // Nunca undefined
+        position: { ...car.pos },
+        rotationY: car.rotation.y,
+        speed: car.speed,
+        laps: car.laps,
+        ...newData
+    });
+}
+
 export function draw(p5) {
+    // Log para garantir que o draw está rodando
+    console.log("draw chamado");
+
     if (!graphics3D || !car || !track || !font) {
         console.log('Aguardando inicialização...');
         return;
@@ -69,16 +100,45 @@ export function draw(p5) {
     updateCamera(graphics3D);
 
     car.update(p5, track, getInputs(p5));
-    updatePlayer(roomId, playerId, {
-        position: { ...car.pos },
-        rotationY: car.rotation.y,
-        speed: car.speed,
-        laps: car.laps
-    });
+    updateMyCar();
 
     car.display(graphics3D);
+
+    // Log do objeto otherCars
+    console.log("otherCars:", otherCars);
+
+    // Desenhar outros carros (instanciar Car temporário)
     for (const id in otherCars) {
-        otherCars[id].display(graphics3D);
+        const data = otherCars[id];
+        // Validação robusta dos dados recebidos
+        if (
+            !data ||
+            typeof data !== "object" ||
+            !data.position ||
+            typeof data.position.x !== "number" ||
+            typeof data.position.y !== "number" ||
+            typeof data.position.z !== "number"
+        ) {
+            console.warn("Carro remoto ignorado por dados inválidos:", id, data);
+            continue;
+        }
+
+        try {
+            const tempCar = new Car(
+                data.position.x,
+                data.position.y,
+                data.position.z,
+                p5,
+                id
+            );
+            tempCar.name = data.name || ("Player " + id.substring(0, 5));
+            tempCar.rotation.y = typeof data.rotationY === "number" ? data.rotationY : 0;
+            tempCar.speed = typeof data.speed === "number" ? data.speed : 0;
+            tempCar.laps = typeof data.laps === "number" ? data.laps : 0;
+            tempCar.display(graphics3D);
+        } catch (e) {
+            console.error("Erro ao desenhar carro remoto:", id, e, data);
+        }
     }
 
     drawCheckpoints(graphics3D);
@@ -195,13 +255,12 @@ function drawMinimap(p5, track, car, otherCars) {
     // Carros remotos
     for (const id in otherCars) {
         const oc = otherCars[id];
-        const rX = offsetX + oc.pos.x * scale;
-        const rY = offsetY + oc.pos.z * scale;
+        if (!oc || !oc.position) continue;
+        const rX = offsetX + oc.position.x * scale;
+        const rY = offsetY + oc.position.z * scale;
         p5.fill(0, 180, 255);
         p5.circle(rX, rY, 8);
     }
-
-    p5.pop();
 }
 
 // Captura inputs do teclado

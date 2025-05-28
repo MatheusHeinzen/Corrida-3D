@@ -1,9 +1,14 @@
 export class Car {
     constructor(x, y, z, p5, playerId = null) {
-        this.pos = { x, y, z };
-        this.playerId = playerId;
+        // Garante que this.pos sempre existe como objeto {x, y, z}
+        this.pos = {
+            x: typeof x === "number" ? x : 0,
+            y: typeof y === "number" ? y : 0,
+            z: typeof z === "number" ? z : 0
+        };
         this.velocity = { x: 0, y: 0, z: 0 };
-        this.rotation = { x: 0, y: 90, z: 0 };
+        this.playerId = playerId;
+        this.rotation = { y: 90 };
         this.speed = 0;
         this.maxSpeed = 50;
         this.acceleration = 0.15;
@@ -157,49 +162,49 @@ export class Car {
         }
     }
 
-    display(p5) {
-        p5.push();
-        p5.translate(this.pos.x, this.pos.y, this.pos.z);
-        p5.rotateY(this.rotation.y);
-        p5.rotateZ(this.roll * 0.05);
+    display(pg) {
+        pg.push();
+        pg.translate(this.pos.x, this.pos.y, this.pos.z);
+        pg.rotateY(this.rotation.y);
+        pg.rotateZ(this.roll * 0.05);
 
-        this.drawBody(p5);
-        this.drawExhaust(p5);
-        this.drawWheels(p5);
+        this.drawBody(pg);
+        this.drawExhaust(pg);
+        this.drawWheels(pg);
 
-        p5.pop();
+        pg.pop();
     }
 
-    drawBody(p5) {
-        p5.push();
-        p5.fill(180, 30, 30);
-        p5.push();
-        p5.box(40, 12, 60);
-        p5.pop();
+    drawBody(pg) {
+        pg.push();
+        pg.fill(180, 30, 30);
+        pg.push();
+        pg.box(40, 12, 60);
+        pg.pop();
 
-        p5.push();
-        p5.translate(0, 10, -9);
-        p5.box(38, 12, 40);
-        p5.pop();
+        pg.push();
+        pg.translate(0, 10, -9);
+        pg.box(38, 12, 40);
+        pg.pop();
 
-        p5.pop();
+        pg.pop();
     }
 
-    drawExhaust(p5) {
-        p5.push();
-        p5.translate(0, 0, -31);
-        p5.specularMaterial(80);
+    drawExhaust(pg) {
+        pg.push();
+        pg.translate(0, 0, -31);
+        pg.specularMaterial(80);
 
         for (let x of [-8, 8]) {
-            p5.push();
-            p5.translate(x, 0, 0);
-            p5.cylinder(2, 6);
-            p5.pop();
+            pg.push();
+            pg.translate(x, 0, 0);
+            pg.cylinder(2, 6);
+            pg.pop();
         }
-        p5.pop();
+        pg.pop();
     }
 
-    drawWheels(p5) {
+    drawWheels(pg) {
         const wheelPositions = [
             { x: -20, y: 0, z: -25, steer: false },
             { x: 20, y: 0, z: -25, steer: false },
@@ -211,24 +216,24 @@ export class Car {
         this._wheelRotation += this.speed * -0.2;
 
         wheelPositions.forEach(wheel => {
-            p5.push();
-            p5.translate(wheel.x, wheel.y, wheel.z);
+            pg.push();
+            pg.translate(wheel.x, wheel.y, wheel.z);
 
-            p5.rotateZ(Math.PI / 2);
+            pg.rotateZ(Math.PI / 2);
 
             if (wheel.steer) {
-                p5.rotateX(this.wheelAngle * 5);
+                pg.rotateX(this.wheelAngle * 5);
             }
 
-            p5.rotateY(this._wheelRotation);
+            pg.rotateY(this._wheelRotation);
 
             // Pneu cinza escuro
-            p5.push();
-            p5.fill(40, 40, 40);
-            p5.cylinder(8, 4);
-            p5.pop();
+            pg.push();
+            pg.fill(40, 40, 40);
+            pg.cylinder(8, 4);
+            pg.pop();
 
-            p5.pop();
+            pg.pop();
         });
     }
 }
