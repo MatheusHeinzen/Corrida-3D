@@ -85,6 +85,29 @@ function updateMyCar(newData) {
     });
 }
 
+function handleCarCollisions(localCar, remoteCars) {
+    const carRadius = 22; // Aproximadamente metade do comprimento do carro
+    for (const id in remoteCars) {
+        const data = remoteCars[id];
+        if (!data || !data.position) continue;
+        // Calcule a distância entre o carro local e o remoto
+        const dx = localCar.pos.x - data.position.x;
+        const dz = localCar.pos.z - data.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < carRadius * 2) {
+            // Colisão detectada!
+            // Empurra o carro local para longe do remoto
+            const overlap = carRadius * 2 - dist;
+            const nx = dx / (dist || 1);
+            const nz = dz / (dist || 1);
+            localCar.pos.x += nx * overlap * 0.5;
+            localCar.pos.z += nz * overlap * 0.5;
+            // Reduz a velocidade do carro local
+            localCar.speed *= 0.7;
+        }
+    }
+}
+
 export function draw(p5) {
     // Log para garantir que o draw está rodando
     console.log("draw chamado");
@@ -100,6 +123,10 @@ export function draw(p5) {
     updateCamera(graphics3D);
 
     car.update(p5, track, getInputs(p5));
+
+    // Colisão com outros carros
+    handleCarCollisions(car, otherCars);
+
     updateMyCar();
 
     car.display(graphics3D);
