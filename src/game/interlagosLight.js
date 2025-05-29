@@ -3,26 +3,33 @@ export function createInterlagosLight(p5) {
     const trackWidth = 250;
     const zebraWidth = 30; // Largura da zebra
 
-    // Traçado com elevação removida (y = 0)
     const points = [
-        { x: 0, z: 0, y: 0 },           // Start/Finish
-        { x: 50, z: -30, y: 0 },        // S do Senna - Entrada
-        { x: 90, z: -60, y: 0 },        // S do Senna - Saída
-        { x: 130, z: -40, y: 0 },       // Curva do Sol
-        { x: 170, z: 20, y: 0 },        // Reta oposta
-        { x: 150, z: 80, y: 0 },        // Descida do Lago
-        { x: 100, z: 100, y: 0 },       // Mergulho
-        { x: 50, z: 120, y: 0 },        // Pinheirinho
-        { x: 0, z: 90, y: 0 },          // Bico de Pato
-        { x: -40, z: 50, y: 0 },        // Subida
-        { x: -60, z: 0, y: 0 },         // Junção
-        { x: -40, z: -40, y: 0 },       // Subida do Café
-        { x: 0, z: -60, y: 0 },         // Reta dos boxes
-        { x: 0, z: 0, y: 0 }            // Fechamento
+        { x: 0, z: 0, y: 0 },           // 0
+        { x: 50, z: -30, y: 0 },        // 1
+        { x: 90, z: -60, y: 0 },        // 2
+        { x: 130, z: -40, y: 0 },       // 3
+        { x: 150, z: -30, y: 0 },       // 4
+        { x: 165, z: -45, y: 0 },       // 5
+        { x: 170, z: 20, y: 0 },        // 6
+        { x: 160, z: 65, y: 0 },        // 7
+        { x: 150, z: 80, y: 0 },        // 8
+        { x: 100, z: 100, y: 0 },       // 9
+        { x: 80, z: 110, y: 0 },        // 10
+        { x: 50, z: 120, y: 0 },        // 11
+        { x: 0, z: 90, y: 0 },          // 12
+        { x: -10, z: 70, y: 0 },        // 13
+        { x: -25, z: 55, y: 0 },        // 14
+        { x: -40, z: 60, y: 0 },        // 15
+        { x: -40, z: 50, y: 0 },        // 16
+        { x: -60, z: 0, y: 0 },         // 17
+        { x: -40, z: -40, y: 0 },       // 18
+        { x: -10, z: -60, y: 0 },       // 19
+        { x: -5, z: -60, y: 0 },        // 20
+        { x: 0, z: 0, y: 0 }            // 21
     ].map(p => ({
         x: p.x * SCALE,
         z: p.z * SCALE,
-        y: 0 // Mantém o traçado plano
+        y: 0
     }));
 
     function drawTrackSurface() {
