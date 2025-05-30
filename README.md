@@ -66,7 +66,7 @@ O projeto está organizado em um [Quadro Trello](https://trello.com/b/QlzezmJ1/j
 ---
 
 ## 📄 Licença
-Projeto acadêmico sob licença **PUCPC**. Músicas de terceiros possuem licenças próprias.
+Projeto acadêmico sob licença **PUCPR**. Músicas de terceiros possuem licenças próprias.
 
 ---
 
