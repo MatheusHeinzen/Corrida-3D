@@ -43,6 +43,8 @@ export class Car {
     update(p5, track, inputs = {}) {
         if (!this.p5) this.p5 = p5;
 
+        this._collisionProcessed = false;
+
         let steerInput = 0;
         if (inputs.left) steerInput -= 1;
         if (inputs.right) steerInput += 1;
@@ -147,7 +149,7 @@ export class Car {
                 const b = track.points[i + 1];
                 // Distância ponto-segmento 2D
                 const t = ((this.pos.x - a.x) * (b.x - a.x) + (this.pos.z - a.z) * (b.z - a.z)) /
-                          ((b.x - a.x) ** 2 + (b.z - a.z) ** 2);
+                    ((b.x - a.x) ** 2 + (b.z - a.z) ** 2);
                 const tClamped = Math.max(0, Math.min(1, t));
                 const projX = a.x + tClamped * (b.x - a.x);
                 const projZ = a.z + tClamped * (b.z - a.z);
@@ -247,6 +249,20 @@ export class Car {
         this.drawBody(pg);
         this.drawExhaust(pg);
         pg.pop();
+
+        if (this.collisionEffect && this.collisionEffect.time > 0) {
+            pg.push();
+            pg.translate(
+                this.collisionEffect.pos.x,
+                this.collisionEffect.pos.y + 5,
+                this.collisionEffect.pos.z
+            );
+            pg.noStroke();
+            pg.fill(255, 100, 0, 150);
+            pg.sphere(10);
+            pg.pop();
+            this.collisionEffect.time--;
+        }
     }
 
     drawBody(pg) {

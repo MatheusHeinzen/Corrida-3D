@@ -93,49 +93,67 @@ function updateMyCar() {
     });
 }
 
-function handleCarCollisions(localCar, remoteCars, p5) {
-    const carRadius = 22;
-    const restitution = 0.5; // Coeficiente de restituição (elasticidade)
+function handleCarCollisions(p5, localCar, remoteCars) {
+    const carRadius = 25;
+    const restitution = 0.7;
+    const responseFactor = 0.5;
+
+    if (localCar._collisionProcessed) return;
+    localCar._collisionProcessed = true;
 
     for (const id in remoteCars) {
         const remoteData = remoteCars[id];
         if (!remoteData || !remoteData.position) continue;
 
-        const localPos = p5.createVector(localCar.pos.x, localCar.pos.y, localCar.pos.z);
-        const remotePos = p5.createVector(remoteData.position.x, remoteData.position.y, remoteData.position.z);
-
-        const dist = p5.Vector.dist(localPos, remotePos);
-        const direction = p5.Vector.sub(localPos, remotePos).normalize();
+        const localPos = p5.createVector(localCar.pos.x, localCar.pos.z);
+        const remotePos = p5.createVector(remoteData.position.x, remoteData.position.z);
+        const dist = localPos.dist(remotePos);
 
         if (dist < carRadius * 2) {
-            const overlap = carRadius * 2 - dist;
-            const pushForce = direction.copy().mult(overlap * 0.5);
-            localCar.pos.add(pushForce);
+            const overlap = (carRadius * 2 - dist) * responseFactor;
+            const dx = localPos.x - remotePos.x;
+            const dz = localPos.y - remotePos.y;
+            const mag = Math.sqrt(dx * dx + dz * dz) || 1;
+            const direction = { x: dx / mag, z: dz / mag };
 
-            let remoteVel = p5.createVector(0, 0, 0);
-            if (remoteData.velocity) {
-                remoteVel.set(remoteData.velocity.x, remoteData.velocity.y, remoteData.velocity.z);
-            }
+            localCar.pos.x += direction.x * overlap;
+            localCar.pos.z += direction.z * overlap;
 
-            const relativeVelocity = p5.Vector.sub(localCar.velocity, remoteVel);
-            const velocityAlongNormal = p5.Vector.dot(relativeVelocity, direction);
+            const localVel = p5.createVector(localCar.velocity.x, localCar.velocity.z);
+            const remoteVel = p5.createVector(
+                remoteData.velocity?.x || 0,
+                remoteData.velocity?.z || 0
+            );
 
-            // Use massa fictícia 1 para ambos
-            // Remova completamente o uso de totalMass, pois não é necessário
-            if (velocityAlongNormal > 0) {
-                const impulse = -(1 + restitution) * velocityAlongNormal;
-                const impulseVec = direction.copy().mult(impulse);
+            // Corrige: calcula normal corretamente (linha 130)
+            // Não use p5.createVector para normal, use objeto simples para evitar confusão de componentes
+            const normal = { x: direction.x, z: direction.z };
+            const relVel = {
+                x: localVel.x - remoteVel.x,
+                z: localVel.y - remoteVel.y
+            };
+            const velAlongNormal = relVel.x * normal.x + relVel.z * normal.z;
 
-                localCar.velocity.add(impulseVec);
+            if (velAlongNormal > 0) continue;
 
-                localCar.velocity.mult(0.9);
+            const j = -(1 + restitution) * velAlongNormal;
+            const impulse = { x: normal.x * j, z: normal.z * j };
 
-                const tangent = direction.copy().rotate(p5.HALF_PI);
-                const torque = p5.Vector.dot(relativeVelocity, tangent) * 0.1;
-                localCar.rotation.y += torque;
+            const impulseFactor = 0.5;
+            localCar.velocity.x += impulse.x * impulseFactor;
+            localCar.velocity.z += impulse.z * impulseFactor;
 
-                localCar.driftFactor = Math.min(localCar.driftFactor + 0.3, 1);
-            }
+            localCar.collisionEffect = {
+                time: 10,
+                pos: { x: localCar.pos.x, y: localCar.pos.y, z: localCar.pos.z }
+            };
+
+            console.log('Colisão detectada:', {
+                localPos,
+                remotePos,
+                impulse,
+                newVelocity: localCar.velocity
+            });
         }
     }
 }
