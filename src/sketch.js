@@ -71,39 +71,71 @@ function setupFirebase() {
 }
 
 // Exemplo de função para atualizar o próprio carro
-function updateMyCar(newData) {
+function updateMyCar() {
     if (!db || !playerId) return;
-    // Troque 'cars' por 'players'
+
     const carRef = ref(db, `rooms/${roomId}/players/${playerId}`);
     set(carRef, {
-        name: car.name || ("Player " + playerId.substring(0, 5)), // Nunca undefined
-        position: { ...car.pos },
+        name: car.name,
+        position: { x: car.pos.x, y: car.pos.y, z: car.pos.z },
+        velocity: { x: car.velocity.x, y: car.velocity.y, z: car.velocity.z },
         rotationY: car.rotation.y,
         speed: car.speed,
         laps: car.laps,
-        ...newData
+        // driftFactor pode ser undefined se não existir na classe Car
+        driftFactor: typeof car.driftFactor === "number" ? car.driftFactor : 0
+    }).catch((err) => {
+        // Log detalhado para depuração
+        console.error("Erro ao salvar carro no Firebase:", err, {
+            driftFactor: car.driftFactor,
+            car
+        });
     });
 }
 
-function handleCarCollisions(localCar, remoteCars) {
-    const carRadius = 22; // Aproximadamente metade do comprimento do carro
+function handleCarCollisions(localCar, remoteCars, p5) {
+    const carRadius = 22;
+    const restitution = 0.5; // Coeficiente de restituição (elasticidade)
+
     for (const id in remoteCars) {
-        const data = remoteCars[id];
-        if (!data || !data.position) continue;
-        // Calcule a distância entre o carro local e o remoto
-        const dx = localCar.pos.x - data.position.x;
-        const dz = localCar.pos.z - data.position.z;
-        const dist = Math.sqrt(dx * dx + dz * dz);
+        const remoteData = remoteCars[id];
+        if (!remoteData || !remoteData.position) continue;
+
+        const localPos = p5.createVector(localCar.pos.x, localCar.pos.y, localCar.pos.z);
+        const remotePos = p5.createVector(remoteData.position.x, remoteData.position.y, remoteData.position.z);
+
+        const dist = p5.Vector.dist(localPos, remotePos);
+        const direction = p5.Vector.sub(localPos, remotePos).normalize();
+
         if (dist < carRadius * 2) {
-            // Colisão detectada!
-            // Empurra o carro local para longe do remoto
             const overlap = carRadius * 2 - dist;
-            const nx = dx / (dist || 1);
-            const nz = dz / (dist || 1);
-            localCar.pos.x += nx * overlap * 0.5;
-            localCar.pos.z += nz * overlap * 0.5;
-            // Reduz a velocidade do carro local
-            localCar.speed *= 0.7;
+            const pushForce = direction.copy().mult(overlap * 0.5);
+            localCar.pos.add(pushForce);
+
+            let remoteVel = p5.createVector(0, 0, 0);
+            if (remoteData.velocity) {
+                remoteVel.set(remoteData.velocity.x, remoteData.velocity.y, remoteData.velocity.z);
+            }
+
+            const relativeVelocity = p5.Vector.sub(localCar.velocity, remoteVel);
+            const velocityAlongNormal = p5.Vector.dot(relativeVelocity, direction);
+
+            // Use massa fictícia 1 para ambos
+            // Remova completamente o uso de totalMass, pois não é necessário
+            if (velocityAlongNormal > 0) {
+                const impulse = -(1 + restitution) * velocityAlongNormal;
+                const impulseVec = direction.copy().mult(impulse);
+
+                localCar.velocity.add(impulseVec);
+
+                localCar.velocity.mult(0.9);
+
+                const tangent = direction.copy().rotate(p5.HALF_PI);
+                const torque = p5.Vector.dot(relativeVelocity, tangent) * 0.1;
+                localCar.rotation.y += torque;
+
+                localCar.driftFactor = Math.min(localCar.driftFactor + 0.3, 1);
+            }
         }
     }
 }
@@ -125,7 +157,7 @@ export function draw(p5) {
     car.update(p5, track, getInputs(p5));
 
     // Colisão com outros carros
-    handleCarCollisions(car, otherCars);
+    handleCarCollisions(p5, car, otherCars);
 
     updateMyCar();
 
@@ -137,35 +169,26 @@ export function draw(p5) {
     // Desenhar outros carros (instanciar Car temporário)
     for (const id in otherCars) {
         const data = otherCars[id];
-        // Validação robusta dos dados recebidos
-        if (
-            !data ||
-            typeof data !== "object" ||
-            !data.position ||
-            typeof data.position.x !== "number" ||
-            typeof data.position.y !== "number" ||
-            typeof data.position.z !== "number"
-        ) {
-            console.warn("Carro remoto ignorado por dados inválidos:", id, data);
-            continue;
-        }
+        if (!data || !data.position) continue;
 
-        try {
-            const tempCar = new Car(
-                data.position.x,
-                data.position.y,
-                data.position.z,
-                p5,
-                id
-            );
-            tempCar.name = data.name || ("Player " + id.substring(0, 5));
-            tempCar.rotation.y = typeof data.rotationY === "number" ? data.rotationY : 0;
-            tempCar.speed = typeof data.speed === "number" ? data.speed : 0;
-            tempCar.laps = typeof data.laps === "number" ? data.laps : 0;
-            tempCar.display(graphics3D);
-        } catch (e) {
-            console.error("Erro ao desenhar carro remoto:", id, e, data);
+        const tempCar = new Car(
+            data.position.x,
+            data.position.y,
+            data.position.z,
+            p5,
+            id
+        );
+
+        // Atualizar propriedades físicas
+        if (data.velocity) {
+            tempCar.velocity.set(data.velocity.x, data.velocity.y, data.velocity.z);
         }
+        tempCar.rotation.y = data.rotationY || 0;
+        tempCar.speed = data.speed || 0;
+        tempCar.laps = data.laps || 0;
+        tempCar.driftFactor = data.driftFactor || 0;
+
+        tempCar.display(graphics3D);
     }
 
     drawCheckpoints(graphics3D);
@@ -197,12 +220,20 @@ function drawScreenHUD(p5) {
 
     // Posição do HUD
     const x = 30, y = 30;
-    
+
     // Textos do HUD
     p5.text(`Voltas: ${car.laps}`, x, y);
     p5.text(`Tempo atual: ${tempoAtual}`, x, y + 30);
     p5.text(`Última volta: ${tempoUltima}`, x, y + 60);
-    p5.text(`Velocidade: ${Math.abs(car.speed*3).toFixed(1)}`, x, y + 90);
+
+    // Velocímetro, marcha e RPM
+    const velocidade = Math.abs(car.speed * 5).toFixed(1); // m/s para km/h
+    const marcha = (car.currentGear + 1); // gears começam em 0
+    const rpm = Math.round(car.engineRPM);
+
+    p5.text(`Velocidade: ${velocidade} km/h`, x, y + 90);
+    p5.text(`Marcha: ${marcha}`, x, y + 120);
+    p5.text(`RPM: ${rpm}`, x, y + 150);
 
     // FPS pequeno no canto superior esquerdo
     p5.textSize(12);

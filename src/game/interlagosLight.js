@@ -1,6 +1,6 @@
 export function createInterlagosLight(p5) {
-    const SCALE = 250;
-    const trackWidth = 250;
+    const SCALE = 200;
+    const trackWidth = 300;
     const zebraWidth = 30; // Largura da zebra
 
     const points = [
