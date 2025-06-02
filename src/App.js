@@ -1,12 +1,23 @@
 // App.js
-import React from 'react';
+import React, { useState } from 'react';
 import Sketch from 'react-p5';
+import { Lobby } from './game/Lobby/lobby';
 import { setup, draw } from './game/sketch';
 
 function App() {
+  const [started, setStarted] = useState(false);
+
+  const handleStart = () => {
+    setStarted(true);
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <Sketch setup={setup} draw={draw} />
+      {!started ? (
+        <Lobby onStart={handleStart} />
+      ) : (
+        <Sketch setup={setup} draw={draw} />
+      )}
     </div>
   );
 }
