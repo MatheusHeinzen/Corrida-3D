@@ -11,8 +11,8 @@ export class Car {
         this.mass = 1000;
         this.enginePower = 900;
         this.brakePower = 300;
-        this.dragCoefficient = 0.25; // levemente mais arrasto para dar mais "peso"
-        this.rollingResistance = 0.02; // idem
+        this.dragCoefficient = 0.25;
+        this.rollingResistance = 0.02;
         this.weightDistribution = 0.6;
 
         // Controle
@@ -80,7 +80,7 @@ export class Car {
         }
 
         // Força de downforce (aumenta aderência com a velocidade)
-        const downforceCoef = 2.5; // aumente para mais aderência
+        const downforceCoef = 2.5;
         const downforce = this.velocity.copy()
             .normalize()
             .mult(-downforceCoef * speed);
