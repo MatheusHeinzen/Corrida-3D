@@ -82,6 +82,7 @@ export class Car {
         p5.push();
         p5.translate(this.pos.x, this.pos.y, this.pos.z);
         p5.rotateY(this.rotation.y);
+        p5.scale(2);
 
         // Corpo do carro (com inclinação na derrapagem e roll)
         p5.push();
