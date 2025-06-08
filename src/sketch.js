@@ -382,6 +382,5 @@ function getInputs(p5) {
         down: p5.keyIsDown(83),  // S
         left: p5.keyIsDown(65),  // A
         right: p5.keyIsDown(68), // D
-        handbrake: p5.keyIsDown(32)
     };
 }
