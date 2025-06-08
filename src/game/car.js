@@ -96,28 +96,53 @@ export class Car {
     }
 
     drawBody(p5) {
+        //Caixa de baixo
         p5.push();
         p5.fill(180, 30, 30);
         p5.push();
-        p5.box(40, 12, 60);
+        p5.box(40, 12, 70);
         p5.pop();
 
+        //Caixa de Cima
         p5.push();
-        p5.translate(0, 10, -9);
+        p5.translate(0, 10, 0);
         p5.box(38, 12, 40);
         p5.pop();
 
+        //Triangulo em cima direita
+        p5.push();
+        p5.translate(18, 10, -20);
+        p5.cone(8,12,3)
+        p5.pop();
+
+        //Triangulo em cima esquerda
+        p5.push();
+        p5.translate(-18, 10, -20);
+        p5.cone(8,12,3)
+        p5.pop();
+
+        //Completa os 2 triangulos
+        p5.push();
+        p5.translate(0, 10, -23);
+        p5.rotateX(40 * Math.PI / 180);
+        p5.plane(38, 12, 4);
+        p5.pop();
+
+        //Aerofólio
+        p5.push();
+        p5.translate(0, 9, -34);
+        p5.box(38,6,1)
         p5.pop();
     }
 
     drawExhaust(p5) {
         p5.push();
-        p5.translate(0, 0, -31);
-        p5.specularMaterial(80);
+        p5.translate(0, 0, -35);
 
         for (let x of [-8, 8]) {
             p5.push();
-            p5.translate(x, 0, 0);
+            p5.translate(x, 0, -1);
+            p5.rotateX(Math.PI / 2)
             p5.cylinder(2, 6);
             p5.pop();
         }
@@ -150,42 +175,10 @@ export class Car {
             // Pneu cinza escuro
             p5.push();
             p5.fill(40, 40, 40);
-            p5.cylinder(8, 4);
+            p5.cylinder(8, 4, 15);
             p5.pop();
 
             p5.pop();
         });
     }
 }
-
-// // Função utilitária: distância ponto-segmento 2D
-// function pointToSegmentDistance(px, pz, x1, z1, x2, z2) {
-//     const vx = x2 - x1;
-//     const vz = z2 - z1;
-//     const wx = px - x1;
-//     const wz = pz - z1;
-//     const c1 = vx * wx + vz * wz;
-//     if (c1 <= 0) return Math.sqrt(wx * wx + wz * wz);
-//     const c2 = vx * vx + vz * vz;
-//     if (c2 <= c1) return Math.sqrt((px - x2) ** 2 + (pz - z2) ** 2);
-//     const b = c1 / c2;
-//     const bx = x1 + b * vx;
-//     const bz = z1 + b * vz;
-//     return Math.sqrt((px - bx) ** 2 + (pz - bz) ** 2);
-// }
-
-// // Função utilitária: ponto mais próximo no segmento
-// function closestPointOnSegment(px, pz, x1, z1, x2, z2) {
-//     const vx = x2 - x1;
-//     const vz = z2 - z1;
-//     const wx = px - x1;
-//     const wz = pz - z1;
-//     const c1 = vx * wx + vz * wz;
-//     const c2 = vx * vx + vz * vz;
-//     let b = 0;
-//     if (c2 > 0) b = Math.max(0, Math.min(1, c1 / c2));
-//     return {
-//         x: x1 + b * vx,
-//         z: z1 + b * vz
-//     };
-// }
