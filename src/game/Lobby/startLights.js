@@ -1,4 +1,4 @@
-export class StartGame {
+export class StartLights {
     constructor(x, y, z, p5) {
         this.pos = { x, y, z };
         this.state = "idle"; // idle, lighting, waiting, blackout, green

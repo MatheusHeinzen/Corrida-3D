@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { CarPreview } from './carPreview';
 import './lobby.css';
 
-export function Lobby({ onJoin, onCreate }) {
+export function ChooseCar({ carColor, setCarColor, onConfirm, onBack }) {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
 
@@ -37,7 +37,7 @@ export function Lobby({ onJoin, onCreate }) {
                     zIndex: 0,
                 }}
             />
-            
+
             {/* Conteúdo por cima */}
             <div
                 style={{
@@ -55,26 +55,17 @@ export function Lobby({ onJoin, onCreate }) {
                     <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
                 </audio>
 
-                <img
-                    src="/assets/imgs/title.png"
-                    alt="Título"
-                    style={{ width: 500, marginBottom: 10 }}
-                />
-
-                <div style={{ zIndex: 2, display: 'flex', scale: 2, gap: 20, marginBottom: 20, marginTop: 20 }}>
-                    <CarPreview color={{ r: 200, g: 30, b: 30 }} />
-                    <CarPreview color={{ r: 30, g: 120, b: 200 }} />
-                    <CarPreview color={{ r: 30, g: 200, b: 80 }} />
+                <div style={{ display: 'flex', gap: 20 }}>
+                    <CarPreview color={carColor} />
+                    {/* Adicione botões para mudar a cor, ex: */}
+                    <button onClick={() => setCarColor({ r: 200, g: 30, b: 30 })}>Vermelho</button>
+                    <button onClick={() => setCarColor({ r: 30, g: 120, b: 200 })}>Azul</button>
+                    <button onClick={() => setCarColor({ r: 30, g: 200, b: 80 })}>Verde</button>
                 </div>
+                <button onClick={onConfirm}>Confirmar</button>
+                <button onClick={onBack}>Voltar</button>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                    <button className='lobby-btn' onClick={onJoin}>
-                        Encontrar Sala
-                    </button>
-                    <button className='lobby-btn' onClick={onCreate}>
-                        Criar Sala
-                    </button>
-                </div>
+
 
                 <div className='radio-control'>
                     <img
@@ -86,7 +77,7 @@ export function Lobby({ onJoin, onCreate }) {
                     <img
                         src='/assets/imgs/next.png'
                         style={{ width: 70, height: 50, cursor: 'pointer' }}
-                        onClick={handleToggleAudio}
+                        onClick={onStart}
                         alt="Next"
                     />
                 </div>
