@@ -1,5 +1,6 @@
 import React from 'react';
 import { CarPreview } from './carPreview';
+import './lobby.css';
 
 export function Lobby({ onStart }) {
     return (
@@ -33,25 +34,31 @@ export function Lobby({ onStart }) {
                     height: '100%',
                 }}
             >
+                <audio autoPlay loop>
+                    <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
+                </audio>
                 <img
                     src="/assets/imgs/title.png"
                     alt="Título"
                     style={{ width: 500, marginBottom: 10 }}
                 />
-                <div style={{ zIndex: 2 }}>
-                    <CarPreview />
+                <div style={{ zIndex: 2, display: 'flex', scale: 2, gap: 20, marginBottom: 20 }}>
+                    <CarPreview color={{ r: 200, g: 30, b: 30 }} />
+                    <CarPreview color={{ r: 30, g: 120, b: 200 }} />
+                    <CarPreview color={{ r: 30, g: 200, b: 80 }} />
                 </div>
                 <h1>Bem-vindo a Radiator Springs!</h1>
-
-                <button style={{ fontSize: 24, padding: '12px 24px', borderRadius: '7px', border: '0px' }} onClick={onStart}>
-                    Iniciar Corrida
-                </button>
-                <button>
-                    Criar Sala
-                </button>
-                <button>
-                    Escolher Carro
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button className='lobby-btn' onClick={onStart}>
+                        Iniciar Corrida
+                    </button>
+                    <button className='lobby-btn' onClick={onStart}>
+                        Criar Sala
+                    </button>
+                    <button className='lobby-btn' onClick={onStart}>
+                        Escolher Carro
+                    </button>
+                </div>
             </div>
         </div>
     );

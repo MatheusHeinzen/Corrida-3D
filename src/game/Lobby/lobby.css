@@ -1,0 +1,18 @@
+.lobby-btn {
+  font-size: 24px;
+  padding: 12px 24px;
+  border-radius: 7px;
+  border: 0px;
+  background: #fff;
+  color: #000000;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.lobby-btn:hover {
+  background: #000000;
+  color: #fff;
+  transform: scale(1.07);
+  gap: 12px;
+}
