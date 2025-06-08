@@ -1,4 +1,4 @@
-export class Car {
+export class BaseCar {
     constructor(x, y, z, p5) {
         this.pos = { x, y, z };
         this.velocity = { x: 0, y: 0, z: 0 };
@@ -13,24 +13,29 @@ export class Car {
         this.wheelAngle = 0;
         this.driftFactor = 0;
         this.roll = 0;
-        this.color = { r: 200, g: 30, b: 30 };
 
-        // Voltas e tempo (não usados para teste isolado)
+        // Propriedades que podem ser customizadas pelas subclasses
+        this.color = { r: 200, g: 30, b: 30 };
+        this.bodySize = { width: 40, height: 12, length: 70 };
+        this.topSize = { width: 38, height: 12, length: 40 };
+
+        // Voltas e tempo
         this.laps = 0;
         this.lapStartTime = 0;
         this.lastLapTime = 0;
-
-        // Controle de passagem pelo checkpoint inicial (não usado)
         this.lastLapRegisterTime = 0;
+
+        // Roda animation
+        this._wheelRotation = 0;
     }
 
+    // Métodos de movimento (compartilhados por todos os carros)
     getHeightAtPosition(p5, track) {
-        // Para teste, mantenha o carro sempre no plano y = 0
         return 0;
     }
 
     update(p5, track) {
-        // Controles de aceleração/freio
+        // Controles de aceleração/freio (mesmo para todos os carros)
         if (p5.keyIsDown(87)) { // W
             this.speed += this.acceleration;
         } else if (p5.keyIsDown(83)) { // S
@@ -45,7 +50,6 @@ export class Car {
             this.speed *= 0.99;
         }
 
-        // Limita velocidade
         this.speed = Math.min(Math.max(this.speed, -this.maxSpeed * 0.4), this.maxSpeed);
 
         // Controle de direção
@@ -72,13 +76,10 @@ export class Car {
             this.roll *= 0.8;
         }
 
-        // Movimento baseado na rotação
         this.velocity.x = Math.sin(this.rotation.y) * this.speed;
         this.velocity.z = Math.cos(this.rotation.y) * this.speed;
         this.pos.x += this.velocity.x;
         this.pos.z += this.velocity.z;
-
-        // Mantém o carro no plano y = 0
         this.pos.y = 0;
     }
 
@@ -95,49 +96,16 @@ export class Car {
         p5.pop();
     }
 
+    // Métodos de desenho que podem ser sobrescritos pelas subclasses
     drawBody(p5) {
-        //Caixa de baixo
-        p5.push();
-        p5.fill(180, 30, 30);
-        p5.push();
-        p5.box(40, 12, 70);
-        p5.pop();
-
-        //Caixa de Cima
-        p5.push();
-        p5.translate(0, 10, 0);
-        p5.box(38, 12, 40);
-        p5.pop();
-
-        //Triangulo em cima direita
-        p5.push();
-        p5.translate(18, 10, -20);
-        p5.cone(8,12,3)
-        p5.pop();
-
-        //Triangulo em cima esquerda
-        p5.push();
-        p5.translate(-18, 10, -20);
-        p5.cone(8,12,3)
-        p5.pop();
-
-        //Completa os 2 triangulos
-        p5.push();
-        p5.translate(0, 10, -23);
-        p5.rotateX(40 * Math.PI / 180);
-        p5.plane(38, 12, 4);
-        p5.pop();
-
-        //Aerofólio
-        p5.push();
-        p5.translate(0, 9, -34);
-        p5.box(38,6,1)
-        p5.pop();
+        p5.fill(this.color.r, this.color.g, this.color.b);
+        p5.box(this.bodySize.width, this.bodySize.height, this.bodySize.length);
     }
 
     drawExhaust(p5) {
         p5.push();
-        p5.translate(0, 0, -35);
+        p5.translate(0, 0, -this.bodySize.length / 2);
+        p5.fill(40, 40, 40);
 
         for (let x of [-8, 8]) {
             p5.push();
@@ -151,19 +119,17 @@ export class Car {
 
     drawWheels(p5) {
         const wheelPositions = [
-            { x: -20, y: 0, z: -25, steer: false },
-            { x: 20, y: 0, z: -25, steer: false },
-            { x: -20, y: 0, z: 25, steer: true },
-            { x: 20, y: 0, z: 25, steer: true }
+            { x: -this.bodySize.width / 2, y: 0, z: -this.bodySize.length / 3, steer: false },
+            { x: this.bodySize.width / 2, y: 0, z: -this.bodySize.length / 3, steer: false },
+            { x: -this.bodySize.width / 2, y: 0, z: this.bodySize.length / 3, steer: true },
+            { x: this.bodySize.width / 2, y: 0, z: this.bodySize.length / 3, steer: true }
         ];
 
-        if (this._wheelRotation === undefined) this._wheelRotation = 0;
         this._wheelRotation += this.speed * -0.2;
 
         wheelPositions.forEach(wheel => {
             p5.push();
             p5.translate(wheel.x, wheel.y, wheel.z);
-
             p5.rotateZ(Math.PI / 2);
 
             if (wheel.steer) {
@@ -171,14 +137,245 @@ export class Car {
             }
 
             p5.rotateY(this._wheelRotation);
-
-            // Pneu cinza escuro
-            p5.push();
             p5.fill(40, 40, 40);
             p5.cylinder(8, 4, 15);
             p5.pop();
-
-            p5.pop();
         });
+    }
+}
+
+//McQueen
+export class McQueen extends BaseCar {
+    constructor(x, y, z, p5) {
+        super(x, y, z, p5);
+        this.color = { r: 180, g: 30, b: 30 };
+    }
+
+    drawBody(p5) {
+        p5.push();
+        p5.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        p5.push();
+        p5.box(40, 12, 70);
+        p5.pop();
+
+        // Caixa de Cima
+        p5.push();
+        p5.translate(0, 10, 0);
+        p5.box(38, 12, 40);
+        p5.pop();
+
+        // Triangulo em cima direita
+        p5.push();
+        p5.translate(18, 10, -20);
+        p5.cone(8, 12, 3)
+        p5.pop();
+
+        // Triangulo em cima esquerda
+        p5.push();
+        p5.translate(-18, 10, -20);
+        p5.cone(8, 12, 3)
+        p5.pop();
+
+        // Completa os 2 triangulos
+        p5.push();
+        p5.translate(0, 10, -23);
+        p5.rotateX(40 * Math.PI / 180);
+        p5.plane(38, 12, 4);
+        p5.pop();
+
+        // Aerofólio
+        p5.push();
+        p5.translate(0, 9, -34);
+        p5.box(38, 6, 1)
+        p5.pop();
+        p5.pop();
+    }
+}
+
+//Strip Weathers
+export class ORei extends BaseCar {
+    constructor(x, y, z, p5) {
+        super(x, y, z, p5);
+        this.color = { r: 30, g: 120, b: 240 };
+    }
+
+    drawBody(p5) {
+        p5.push();
+        p5.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        p5.push();
+        p5.box(40, 12, 75);
+        p5.pop();
+
+        // Caixa de Cima
+        p5.push();
+        p5.translate(0, 10, 0);
+        p5.box(38, 12, 40);
+        p5.pop();
+
+        // Triangulo em cima direita
+        p5.push();
+        p5.translate(18, 10, -20);
+        p5.cone(8, 12, 3);
+        p5.pop();
+
+        // Triangulo em cima esquerda
+        p5.push();
+        p5.translate(-18, 10, -20);
+        p5.cone(8, 12, 3);
+        p5.pop();
+
+        // Completa os 2 triangulos
+        p5.push();
+        p5.translate(0, 10, -23);
+        p5.rotateX(40 * Math.PI / 180);
+        p5.plane(38, 12, 4);
+        p5.pop();
+
+        // Aerofólio
+        p5.push();
+        p5.translate(0, 25, -36);
+        p5.box(38, 3, 2)
+        p5.pop();
+        p5.push();
+        p5.translate(19, 16, -36);
+        p5.box(3, 20, 2);
+        p5.pop();
+        p5.push();
+        p5.translate(-19, 16, -36);
+        p5.box(3, 20, 2);
+        p5.pop();
+
+        // Triangulo frente em cima direita
+        p5.push();
+        p5.translate(18, 3, 37);
+        p5.cone(8, 6, 3);
+        p5.pop();
+
+        // Triangulo frente em cima esquerda
+        p5.push();
+        p5.translate(-18, 3, 37);
+        p5.cone(8, 6, 3);
+        p5.pop();
+
+        // Completa os 2 triangulos fc
+        p5.push();
+        p5.translate(0, 3, 40);
+        p5.rotateX(-40 * Math.PI / 180);
+        p5.plane(38, 6, 4);
+        p5.pop();
+
+        // Triangulo frente embaixo direita
+        p5.push();
+        p5.translate(18, -3, 37);
+        p5.rotateX(Math.PI);
+        p5.cone(8, 7, 3);
+        p5.pop();
+
+        // Triangulo frente embaixo esquerda
+        p5.push();
+        p5.translate(-18, -3, 37);
+        p5.rotateX(Math.PI);
+        p5.cone(8, 6, 3)
+        p5.pop();
+
+        // Completa os 2 triangulos fb
+        p5.push();
+        p5.translate(0, -3, 40);
+        p5.rotateX(40 * Math.PI / 180);
+        p5.plane(38, 7, 4);
+        p5.pop();
+        p5.pop();
+    }
+
+        drawExhaust(p5) {
+        p5.push();
+        p5.translate(0, 0, -this.bodySize.length / 2);
+        p5.fill(40, 40, 40);
+
+        for (let x of [-19, 19]) {
+            for(let z of [22, 27]) {
+                p5.push();
+                p5.translate(x, -5, z);
+                p5.rotateX(Math.PI / 2);
+                p5.rotateZ(Math.PI / 2);
+                p5.cylinder(2, 6);
+                p5.pop();}
+        }
+        p5.pop();
+    }
+}
+
+//Chick Hicks
+export class ChickHicks extends BaseCar {
+    constructor(x, y, z, p5) {
+        super(x, y, z, p5);
+        this.color = { r: 30, g: 180, b: 30 };
+    }
+
+    drawBody(p5) {
+        p5.push();
+        p5.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        p5.push();
+        p5.box(40, 12, 75);
+        p5.pop();
+
+        // Caixa de Cima
+        p5.push();
+        p5.translate(0, 10, 0);
+        p5.box(38, 12, 40);
+        p5.pop();
+
+        // Triangulo em cima direita
+        p5.push();
+        p5.translate(18, 10, -20);
+        p5.cone(8, 12, 3)
+        p5.pop();
+
+        // Triangulo em cima esquerda
+        p5.push();
+        p5.translate(-18, 10, -20);
+        p5.cone(8, 12, 3)
+        p5.pop();
+
+        // Completa os 2 triangulos
+        p5.push();
+        p5.translate(0, 10, -23);
+        p5.rotateX(40 * Math.PI / 180);
+        p5.plane(38, 12, 4);
+        p5.pop();
+
+        // Aerofólio
+        p5.push();
+        p5.translate(0, 9, -37);
+        p5.box(38, 6, 1)
+        p5.pop();
+        p5.pop();
+
+        //Bigode
+        p5.push();
+        p5.fill(30, 30, 30);
+        p5.translate(0, 3, 39);
+        p5.box(20, 6, 2)
+        p5.pop();
+    }
+
+        drawExhaust(p5) {
+        p5.push();
+        p5.translate(0, 0, -this.bodySize.length / 2);
+        p5.fill(40, 40, 40);
+
+        for (let x of [-19, 19]) {
+            for(let z of [22, 27]) {
+                p5.push();
+                p5.translate(x, -5, z);
+                p5.rotateX(Math.PI / 2);
+                p5.rotateZ(Math.PI / 2);
+                p5.cylinder(2, 6);
+                p5.pop();}
+        }
+        p5.pop();
     }
 }

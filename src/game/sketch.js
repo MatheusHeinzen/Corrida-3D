@@ -1,4 +1,4 @@
-import { Car } from './car';
+import { McQueen, ORei, ChickHicks } from './car';
 // import { createInterlagosLight } from './interlagosLight';
 
 let car;
@@ -20,7 +20,7 @@ export function setup(p5, canvasParentRef) {
 
     // track = createInterlagosLight(graphics3D);
     // Para teste, não usa pista
-    car = new Car(0, 0, 0, graphics3D);
+    car = new ChickHicks(0, 0, 0, graphics3D);
 
     if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
         canvas.elt.tabIndex = 0;
