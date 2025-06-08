@@ -9,7 +9,7 @@ let track;
 let font;
 let graphics3D;
 let playerId = null;
-let roomId = "race1";
+let roomId = null; // agora será definido dinamicamente
 let db = null;
 
 function getOrCreatePlayerId() {
@@ -34,20 +34,64 @@ export function setup(p5, canvasParentRef) {
     car = new Car(start.x, start.y - 10, start.z, p5, playerId);
     car.name = "Player " + playerId.substring(0, 5);
 
-    setupFirebase();
+    // Definir sala automaticamente para até 3 jogadores por sala
+    selectAvailableRoom(p5, () => {
+        setupFirebase();
+        if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
+            canvas.elt.tabIndex = 0;
+            canvas.elt.focus();
+        }
+    });
+}
 
-    if (canvas && canvas.elt && typeof canvas.elt.focus === 'function') {
-        canvas.elt.tabIndex = 0;
-        canvas.elt.focus();
-    }
+function selectAvailableRoom(p5, callback) {
+    db = getDatabase();
+    const roomsRef = ref(db, `rooms`);
+    // Busca todas as salas e encontra uma com menos de 3 jogadores, ou cria uma nova
+    onValue(roomsRef, (snapshot) => {
+        const rooms = snapshot.val() || {};
+        let foundRoom = null;
+        let foundCount = 0;
+        let minRoomNum = 1;
+        // Procura sala com menos de 3 jogadores
+        for (let key in rooms) {
+            const players = rooms[key]?.players || {};
+            const count = Object.keys(players).length;
+            if (count < 3) {
+                foundRoom = key;
+                foundCount = count;
+                break;
+            }
+            // Descobre o maior número de sala já criado
+            const match = key.match(/^race(\d+)$/);
+            if (match) {
+                minRoomNum = Math.max(minRoomNum, parseInt(match[1]) + 1);
+            }
+        }
+        if (foundRoom) {
+            roomId = foundRoom;
+        } else {
+            // Cria nova sala sequencial
+            roomId = `race${minRoomNum}`;
+        }
+        callback();
+    }, { onlyOnce: true });
 }
 
 function setupFirebase() {
     db = getDatabase();
 
-    // Troque 'cars' por 'players' para bater com o database
     const carRef = ref(db, `rooms/${roomId}/players/${playerId}`);
     const start = track.points[1];
+
+    const carsRef = ref(db, `rooms/${roomId}/players`);
+    onValue(carsRef, (snapshot) => {
+        const allCars = snapshot.val() || {};
+        delete allCars[playerId];
+        otherCars = allCars;
+    });
+
+    // Adiciona o próprio jogador à sala (já garantido que a sala tem vaga)
     const initialCar = {
         name: car.name,
         position: { x: start.x, y: start.y - 10, z: start.z },
@@ -59,14 +103,6 @@ function setupFirebase() {
 
     window.addEventListener("beforeunload", () => {
         remove(carRef);
-    });
-
-    // Troque 'cars' por 'players' aqui também
-    const carsRef = ref(db, `rooms/${roomId}/players`);
-    onValue(carsRef, (snapshot) => {
-        const allCars = snapshot.val() || {};
-        delete allCars[playerId];
-        otherCars = allCars;
     });
 }
 
