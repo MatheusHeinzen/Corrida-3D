@@ -138,7 +138,7 @@ export class BaseCar {
 
             p5.rotateY(this._wheelRotation);
             p5.fill(40, 40, 40);
-            p5.cylinder(8, 4, 15);
+            p5.cylinder(8, 4, 12);
             p5.pop();
         });
     }
