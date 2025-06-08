@@ -25,8 +25,6 @@
 - **Física Avançada**: Sistema de derrapagem, freio de mão e comportamento em curvas.
 
 ### 🛠️ **Em Desenvolvimento** *(Veja o [Trello](https://trello.com/b/QlzezmJ1/jogo-de-corrida))*
-- Novas pistas (ex: Pista de Drift).
-- IA de inimigos (para modo single-player futuro).
 - Sons personalizados para motores e colisões.
 
 ---
