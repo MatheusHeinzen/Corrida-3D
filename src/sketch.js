@@ -1,6 +1,6 @@
 import { getDatabase, ref, set, onValue, remove } from "firebase/database";
 import { v4 as uuidv4 } from "uuid"; // npm install uuid
-import { Car } from './game/car';
+import { BaseCar, McQueen, ChickHicks, ORei } from './game/car';
 import { createInterlagosLight } from './game/interlagosLight';
 
 let car;
@@ -31,7 +31,7 @@ export function setup(p5, canvasParentRef) {
 
     playerId = getOrCreatePlayerId();
     const start = track.points[1];
-    car = new Car(start.x, start.y - 10, start.z, p5, playerId);
+    car = new ChickHicks(start.x, start.y - 10, start.z, p5, playerId);
     car.name = "Player " + playerId.substring(0, 5);
 
     // Definir sala automaticamente para até 3 jogadores por sala
@@ -225,7 +225,7 @@ export function draw(p5) {
         const data = otherCars[id];
         if (!data || !data.position) continue;
 
-        const tempCar = new Car(
+        const tempCar = new BaseCar(
             data.position.x,
             data.position.y,
             data.position.z,

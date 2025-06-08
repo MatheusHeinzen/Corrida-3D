@@ -1,4 +1,4 @@
-export class Car {
+export class BaseCar {
     constructor(x, y, z, p5, playerId = null) {
         this.p5 = p5;
         this.pos = p5.createVector(x || 0, y || 0, z || 0);
@@ -30,6 +30,11 @@ export class Car {
         this.wheelAngle = 0;
         this.roll = 0;
         this._wheelRotation = 0;
+
+        // Propriedades que podem ser customizadas pelas subclasses
+        this.color = { r: 200, g: 30, b: 30 };
+        this.bodySize = { width: 40, height: 12, length: 70 };
+        this.topSize = { width: 38, height: 12, length: 40 };
 
         // Corrida
         this.laps = 0;
@@ -101,7 +106,7 @@ export class Car {
             .add(tractionForce)
             .add(dragForce)
             .add(rollingResistance)
-            .add(downforce) // adiciona downforce
+            .add(downforce)
             .div(this.mass);
 
         this.velocity.add(this.acceleration);
@@ -120,8 +125,8 @@ export class Car {
             slipAngle = p5.constrain(lateralVelocity * 0.5, 0, 1);
             lateralFriction = 0.5;
         } else {
-            slipAngle = p5.constrain(lateralVelocity * 0.05, 0, 0.3); // menos slip natural
-            lateralFriction = p5.map(speed, 0, 60, 1.5, 1.1, true); // mais aderência em alta
+            slipAngle = p5.constrain(lateralVelocity * 0.05, 0, 0.3);
+            lateralFriction = p5.map(speed, 0, 60, 1.5, 1.1, true);
         }
 
         const steeringEfficiency = (1 - slipAngle) * lateralFriction;
@@ -138,16 +143,15 @@ export class Car {
         if (inputs.handbrake) {
             this.velocity.add(lateralForce.mult(1 / this.mass));
         } else {
-            this.velocity.add(lateralForce.mult(0.0002)); // menos escorregadio
+            this.velocity.add(lateralForce.mult(0.0002));
         }
 
-        // Lentidão fora da pista (aplica atrito extra se estiver longe do traçado)
+        // Lentidão fora da pista
         let minDist = Infinity;
         if (track && track.points && track.points.length > 1) {
             for (let i = 0; i < track.points.length - 1; i++) {
                 const a = track.points[i];
                 const b = track.points[i + 1];
-                // Distância ponto-segmento 2D
                 const t = ((this.pos.x - a.x) * (b.x - a.x) + (this.pos.z - a.z) * (b.z - a.z)) /
                     ((b.x - a.x) ** 2 + (b.z - a.z) ** 2);
                 const tClamped = Math.max(0, Math.min(1, t));
@@ -156,9 +160,8 @@ export class Car {
                 const dist = p5.dist(this.pos.x, this.pos.z, projX, projZ);
                 if (dist < minDist) minDist = dist;
             }
-            // Fora do asfalto (ajuste o valor 120 conforme a largura da pista)
             if (minDist > 370) {
-                this.velocity.mult(0.95); // aplica atrito extra fora da pista
+                this.velocity.mult(0.95);
             }
         }
 
@@ -265,26 +268,21 @@ export class Car {
         }
     }
 
+    // Métodos de desenho que podem ser sobrescritos pelas subclasses
     drawBody(pg) {
-        pg.push();
-        pg.fill(180, 30, 30);
-        pg.push();
-        pg.box(40, 12, 60);
-        pg.pop();
-        pg.push();
-        pg.translate(0, 10, -9);
-        pg.box(38, 12, 40);
-        pg.pop();
-        pg.pop();
+        pg.fill(this.color.r, this.color.g, this.color.b);
+        pg.box(this.bodySize.width, this.bodySize.height, this.bodySize.length);
     }
 
     drawExhaust(pg) {
         pg.push();
-        pg.translate(0, 0, -31);
-        pg.specularMaterial(80);
+        pg.translate(0, 0, -this.bodySize.length / 2);
+        pg.fill(40, 40, 40);
+
         for (let x of [-8, 8]) {
             pg.push();
-            pg.translate(x, 0, 0);
+            pg.translate(x, 0, -1);
+            pg.rotateX(Math.PI / 2)
             pg.cylinder(2, 6);
             pg.pop();
         }
@@ -293,25 +291,261 @@ export class Car {
 
     drawWheels(pg) {
         const wheelPositions = [
-            { x: -20, y: 0, z: -25, steer: true },
-            { x: 20, y: 0, z: -25, steer: true },
-            { x: -20, y: 0, z: 25, steer: false },
-            { x: 20, y: 0, z: 25, steer: false }
+            { x: -this.bodySize.width / 2, y: 0, z: -this.bodySize.length / 3, steer: true },
+            { x: this.bodySize.width / 2, y: 0, z: -this.bodySize.length / 3, steer: true },
+            { x: -this.bodySize.width / 2, y: 0, z: this.bodySize.length / 3, steer: false },
+            { x: this.bodySize.width / 2, y: 0, z: this.bodySize.length / 3, steer: false }
         ];
 
         wheelPositions.forEach(wheel => {
             pg.push();
             pg.translate(wheel.x, wheel.y, wheel.z);
             pg.rotateZ(Math.PI / 2);
+
             if (wheel.steer) {
                 pg.rotateY(this.steeringAngle);
             }
+
             pg.rotateY(this._wheelRotation);
-            pg.push();
             pg.fill(40, 40, 40);
-            pg.cylinder(8, 4);
-            pg.pop();
+            pg.cylinder(8, 4, 12);
             pg.pop();
         });
+    }
+}
+
+//McQueen
+export class McQueen extends BaseCar {
+    constructor(x, y, z, p5, playerId = null) {
+        super(x, y, z, p5, playerId);
+        this.color = { r: 180, g: 30, b: 30 };
+    }
+
+    drawBody(pg) {
+        pg.push();
+        pg.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        pg.push();
+        pg.box(40, 12, 70);
+        pg.pop();
+
+        // Caixa de Cima
+        pg.push();
+        pg.translate(0, 10, 0);
+        pg.box(38, 12, 40);
+        pg.pop();
+
+        // Triangulo em cima direita
+        pg.push();
+        pg.translate(18, 10, -20);
+        pg.cone(8, 12, 3)
+        pg.pop();
+
+        // Triangulo em cima esquerda
+        pg.push();
+        pg.translate(-18, 10, -20);
+        pg.cone(8, 12, 3)
+        pg.pop();
+
+        // Completa os 2 triangulos
+        pg.push();
+        pg.translate(0, 10, -23);
+        pg.rotateX(40 * Math.PI / 180);
+        pg.plane(38, 12, 4);
+        pg.pop();
+
+        // Aerofólio
+        pg.push();
+        pg.translate(0, 9, -34);
+        pg.box(38, 6, 1)
+        pg.pop();
+        pg.pop();
+    }
+}
+
+//Strip Weathers
+export class ORei extends BaseCar {
+    constructor(x, y, z, p5, playerId = null) {
+        super(x, y, z, p5, playerId);
+        this.color = { r: 30, g: 120, b: 240 };
+    }
+
+    drawBody(pg) {
+        pg.push();
+        pg.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        pg.push();
+        pg.box(40, 12, 75);
+        pg.pop();
+
+        // Caixa de Cima
+        pg.push();
+        pg.translate(0, 10, 0);
+        pg.box(38, 12, 40);
+        pg.pop();
+
+        // Triangulo em cima direita
+        pg.push();
+        pg.translate(18, 10, -20);
+        pg.cone(8, 12, 3);
+        pg.pop();
+
+        // Triangulo em cima esquerda
+        pg.push();
+        pg.translate(-18, 10, -20);
+        pg.cone(8, 12, 3);
+        pg.pop();
+
+        // Completa os 2 triangulos
+        pg.push();
+        pg.translate(0, 10, -23);
+        pg.rotateX(40 * Math.PI / 180);
+        pg.plane(38, 12, 4);
+        pg.pop();
+
+        // Aerofólio
+        pg.push();
+        pg.translate(0, 25, -36);
+        pg.box(38, 3, 2)
+        pg.pop();
+        pg.push();
+        pg.translate(19, 16, -36);
+        pg.box(3, 20, 2);
+        pg.pop();
+        pg.push();
+        pg.translate(-19, 16, -36);
+        pg.box(3, 20, 2);
+        pg.pop();
+
+        // Triangulo frente em cima direita
+        pg.push();
+        pg.translate(18, 3, 37);
+        pg.cone(8, 6, 3);
+        pg.pop();
+
+        // Triangulo frente em cima esquerda
+        pg.push();
+        pg.translate(-18, 3, 37);
+        pg.cone(8, 6, 3);
+        pg.pop();
+
+        // Completa os 2 triangulos fc
+        pg.push();
+        pg.translate(0, 3, 40);
+        pg.rotateX(-40 * Math.PI / 180);
+        pg.plane(38, 6, 4);
+        pg.pop();
+
+        // Triangulo frente embaixo direita
+        pg.push();
+        pg.translate(18, -3, 37);
+        pg.rotateX(Math.PI);
+        pg.cone(8, 7, 3);
+        pg.pop();
+
+        // Triangulo frente embaixo esquerda
+        pg.push();
+        pg.translate(-18, -3, 37);
+        pg.rotateX(Math.PI);
+        pg.cone(8, 6, 3)
+        pg.pop();
+
+        // Completa os 2 triangulos fb
+        pg.push();
+        pg.translate(0, -3, 40);
+        pg.rotateX(40 * Math.PI / 180);
+        pg.plane(38, 7, 4);
+        pg.pop();
+        pg.pop();
+    }
+
+    drawExhaust(pg) {
+        pg.push();
+        pg.translate(0, 0, -this.bodySize.length / 2);
+        pg.fill(40, 40, 40);
+
+        for (let x of [-19, 19]) {
+            for(let z of [22, 27]) {
+                pg.push();
+                pg.translate(x, -5, z);
+                pg.rotateX(Math.PI / 2);
+                pg.rotateZ(Math.PI / 2);
+                pg.cylinder(2, 6);
+                pg.pop();}
+        }
+        pg.pop();
+    }
+}
+
+//Chick Hicks
+export class ChickHicks extends BaseCar {
+    constructor(x, y, z, p5, playerId = null) {
+        super(x, y, z, p5, playerId);
+        this.color = { r: 30, g: 180, b: 30 };
+    }
+
+    drawBody(pg) {
+        pg.push();
+        pg.fill(this.color.r, this.color.g, this.color.b);
+        // Caixa de baixo
+        pg.push();
+        pg.box(40, 12, 75);
+        pg.pop();
+
+        // Caixa de Cima
+        pg.push();
+        pg.translate(0, 10, 0);
+        pg.box(38, 12, 40);
+        pg.pop();
+
+        // Triangulo em cima direita
+        pg.push();
+        pg.translate(18, 10, -20);
+        pg.cone(8, 12, 3)
+        pg.pop();
+
+        // Triangulo em cima esquerda
+        pg.push();
+        pg.translate(-18, 10, -20);
+        pg.cone(8, 12, 3)
+        pg.pop();
+
+        // Completa os 2 triangulos
+        pg.push();
+        pg.translate(0, 10, -23);
+        pg.rotateX(40 * Math.PI / 180);
+        pg.plane(38, 12, 4);
+        pg.pop();
+
+        // Aerofólio
+        pg.push();
+        pg.translate(0, 9, -37);
+        pg.box(38, 6, 1)
+        pg.pop();
+        pg.pop();
+
+        //Bigode
+        pg.push();
+        pg.fill(30, 30, 30);
+        pg.translate(0, 3, 39);
+        pg.box(20, 6, 2)
+        pg.pop();
+    }
+
+    drawExhaust(pg) {
+        pg.push();
+        pg.translate(0, 0, -this.bodySize.length / 2);
+        pg.fill(40, 40, 40);
+
+        for (let x of [-19, 19]) {
+            for(let z of [22, 27]) {
+                pg.push();
+                pg.translate(x, -5, z);
+                pg.rotateX(Math.PI / 2);
+                pg.rotateZ(Math.PI / 2);
+                pg.cylinder(2, 6);
+                pg.pop();}
+        }
+        pg.pop();
     }
 }
