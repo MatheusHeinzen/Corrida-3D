@@ -1,4 +1,14 @@
+import React, { useState } from 'react';
+
 export function JoinRoom({ onContinue }) {
+    const [roomCode, setRoomCode] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!roomCode) return;
+        onContinue(roomCode);
+    };
+
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
             {/* Fundo com blur */}
@@ -33,10 +43,15 @@ export function JoinRoom({ onContinue }) {
 
                 <div style={{ padding: 20 }}>
                     <h2>Procurar Sala</h2>
-                    <form className="room-form">
-                        <input type="text" placeholder="Código da sala" />
+                    <form className="room-form" onSubmit={handleSubmit}>
+                        <input
+                            type="text"
+                            placeholder="Código da sala"
+                            value={roomCode}
+                            onChange={e => setRoomCode(e.target.value)}
+                        />
                     </form>
-                    <button className="lobby-btn" style={{justifyContent: 'flex-end'}} onClick={onContinue}>Next</button>
+                    <button className="lobby-btn" style={{justifyContent: 'flex-end'}} onClick={handleSubmit}>Entrar</button>
                 </div>
             </div>
         </div>

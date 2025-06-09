@@ -1,5 +1,5 @@
 import { getDatabase, ref, set, onValue, remove } from "firebase/database";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { v4 as uuidv4 } from "uuid";
 import { BaseCar, McQueen, ChickHicks, ORei } from './game/car';
 import { createInterlagosLight } from './game/interlagosLight';
 
@@ -9,7 +9,7 @@ let track;
 let font;
 let graphics3D;
 let playerId = null;
-let roomId = null; // agora será definido dinamicamente
+let roomId = null;
 let db = null;
 
 function getOrCreatePlayerId() {
@@ -21,7 +21,7 @@ function getOrCreatePlayerId() {
     return id;
 }
 
-export function setup(p5, canvasParentRef) {
+export function setup(p5, canvasParentRef, passedRoomId, passedUserId, passedCarClass) {
     font = p5.loadFont(process.env.PUBLIC_URL + '/SuperBlackMarker.ttf');
     const canvas = p5.createCanvas(854, 480).parent(canvasParentRef);
 
@@ -29,9 +29,30 @@ export function setup(p5, canvasParentRef) {
 
     track = createInterlagosLight(graphics3D);
 
-    playerId = getOrCreatePlayerId();
+    playerId = passedUserId || getOrCreatePlayerId();
+    roomId = passedRoomId || roomId;
     const start = track.points[1];
-    car = new ChickHicks(start.x, start.y - 10, start.z, p5, playerId);
+
+    // Log para depuração
+    console.log("setup: passedCarClass =", passedCarClass, typeof passedCarClass);
+
+    let CarClass = ChickHicks;
+    if (typeof passedCarClass === "string") {
+        switch (passedCarClass) {
+            case "McQueen":
+                CarClass = McQueen;
+                break;
+            case "ORei":
+                CarClass = ORei;
+                break;
+            case "ChickHicks":
+                CarClass = ChickHicks;
+                break;
+            default:
+                CarClass = McQueen;
+        }
+    }
+    car = new CarClass(start.x, start.y - 10, start.z, p5, playerId);
     car.name = "Player " + playerId.substring(0, 5);
 
     // Definir sala automaticamente para até 3 jogadores por sala
@@ -46,6 +67,10 @@ export function setup(p5, canvasParentRef) {
 
 function selectAvailableRoom(p5, callback) {
     db = getDatabase();
+    if (roomId) {
+        callback();
+        return;
+    }
     const roomsRef = ref(db, `rooms`);
     // Busca todas as salas e encontra uma com menos de 3 jogadores, ou cria uma nova
     onValue(roomsRef, (snapshot) => {

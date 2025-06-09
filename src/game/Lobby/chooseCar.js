@@ -20,7 +20,8 @@ export function ChooseCar({onConfirm, onBack , p5}) {
 
         setIsPlaying(!isPlaying);
     };
-    const [selectedCarClass, setSelectedCarClass] = useState(null);
+    // Troque para string
+    const [selectedCar, setSelectedCar] = useState(null);
 
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -59,9 +60,13 @@ export function ChooseCar({onConfirm, onBack , p5}) {
 
                 <div style={{ display: 'flex', gap: 100 }}>
                     <div style={{ scale: 2, top: 156, position: 'relative', zIndex: 2 }}>
-                        {selectedCarClass && (
+                        {selectedCar && (
                             <CarPreview
-                                carClass={selectedCarClass}
+                                carClass={
+                                    selectedCar === "McQueen" ? McQueen :
+                                    selectedCar === "ORei" ? ORei :
+                                    selectedCar === "ChickHicks" ? ChickHicks : null
+                                }
                                 p5={p5}
                             />
                         )}
@@ -69,14 +74,20 @@ export function ChooseCar({onConfirm, onBack , p5}) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <h2>Escolha a cor do seu carro</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <button onClick={() => setSelectedCarClass(() => McQueen)}>McQueen</button>
-                            <button onClick={() => setSelectedCarClass(() => ORei)}>O Rei</button>
-                            <button onClick={() => setSelectedCarClass(() => ChickHicks)}>Chick Hicks</button>
+                            <button onClick={() => setSelectedCar("McQueen")}>McQueen</button>
+                            <button onClick={() => setSelectedCar("ORei")}>O Rei</button>
+                            <button onClick={() => setSelectedCar("ChickHicks")}>Chick Hicks</button>
                         </div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10, zIndex: 2, marginTop: 20 }}>
-                    <button className='lobby-btn' onClick={onConfirm}>Confirmar</button>
+                    <button
+                        className='lobby-btn'
+                        onClick={() => selectedCar && onConfirm(selectedCar)}
+                        disabled={!selectedCar}
+                    >
+                        Confirmar
+                    </button>
                     <button className='lobby-btn' onClick={onBack}>Voltar</button>
                 </div>
 

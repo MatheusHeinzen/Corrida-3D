@@ -8,6 +8,7 @@ import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 function App() {
   const [started, setStarted] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [selectedCarClass, setSelectedCarClass] = useState(null);
 
   useEffect(() => {
     // Gera um ID único para cada jogador (poderia ser auth.uid se usar login)
@@ -22,9 +23,18 @@ function App() {
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       {!started ? (
-        <LobbyRouterPage onStart={() => setStarted(true)} userId={userId} />
+        <LobbyRouterPage
+          onStart={() => setStarted(true)}
+          userId={userId}
+          onCarSelect={setSelectedCarClass}
+        />
       ) : (
-        <Sketch setup={setup} draw={draw} />
+        <Sketch
+          setup={(p5, canvasParentRef) =>
+            setup(p5, canvasParentRef, null, userId, selectedCarClass)
+          }
+          draw={draw}
+        />
       )}
     </div>
   );

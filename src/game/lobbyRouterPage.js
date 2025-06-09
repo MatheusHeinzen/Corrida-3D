@@ -1,23 +1,35 @@
 import React, { useState } from 'react';
 import { Lobby } from './Lobby/lobby';
 import { CreateRoom } from './Lobby/create';
-import { JoinRoom } from './Lobby/join'; // Corrija para join.js
-import { ChooseCar } from './Lobby/chooseCar'; // Corrija para ChooseCar
+import { JoinRoom } from './Lobby/join';
+import { ChooseCar } from './Lobby/chooseCar';
 
-export default function LobbyRouterPage({ p5 }) {
+export default function LobbyRouterPage({ onStart, userId, p5 }) {
     const [view, setView] = useState('lobby');
-    const [carColor, setCarColor] = useState({ r: 255, g: 0, b: 0 });
+    const [roomId, setRoomId] = useState(null);
+    const [carClass, setCarClass] = useState(null);
 
-    const handleCarChosen = () => {
-        // avançar para o jogo, se quiser
-        console.log('Carro escolhido:', carColor);
+    // Quando criar ou entrar numa sala, salva o roomId e vai para escolha de carro
+    const handleCreateRoom = (roomId) => {
+        setRoomId(roomId);
+        setView('car');
+    };
+    const handleJoinRoom = (roomId) => {
+        setRoomId(roomId);
+        setView('car');
+    };
+
+    const handleCarChosen = (chosenCarClass) => {
+        setCarClass(chosenCarClass);
+        // Avança para o jogo, passando o roomId e a classe do carro escolhido
+        if (onStart) onStart(roomId, chosenCarClass);
     };
 
     switch (view) {
         case 'create':
-            return <CreateRoom onContinue={() => setView('car')} />;
+            return <CreateRoom onContinue={handleCreateRoom} />;
         case 'join':
-            return <JoinRoom onContinue={() => setView('car')} />;
+            return <JoinRoom onContinue={handleJoinRoom} />;
         case 'car':
             return (
                 <ChooseCar
