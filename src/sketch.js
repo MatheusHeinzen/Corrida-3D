@@ -36,24 +36,23 @@ export function setup(p5, canvasParentRef, passedRoomId, passedUserId, passedCar
     // Log para depuração
     console.log("setup: passedCarClass =", passedCarClass, typeof passedCarClass);
 
-    let CarClass = ChickHicks;
-    if (typeof passedCarClass === "string") {
-        switch (passedCarClass) {
-            case "McQueen":
-                CarClass = McQueen;
-                break;
-            case "ORei":
-                CarClass = ORei;
-                break;
-            case "ChickHicks":
-                CarClass = ChickHicks;
-                break;
-            default:
-                CarClass = McQueen;
-        }
+    // Instancia o carro diretamente conforme a string recebida
+    let carClassName = typeof passedCarClass === "string" ? passedCarClass : "McQueen";
+    switch (carClassName) {
+        case "McQueen":
+            car = new McQueen(start.x, start.y - 10, start.z, p5, playerId);
+            break;
+        case "ORei":
+            car = new ORei(start.x, start.y - 10, start.z, p5, playerId);
+            break;
+        case "ChickHicks":
+            car = new ChickHicks(start.x, start.y - 10, start.z, p5, playerId);
+            break;
+        default:
+            car = new McQueen(start.x, start.y - 10, start.z, p5, playerId);
     }
-    car = new CarClass(start.x, start.y - 10, start.z, p5, playerId);
     car.name = "Player " + playerId.substring(0, 5);
+    car.carType = carClassName; // <-- Adiciona o tipo do carro
 
     // Definir sala automaticamente para até 3 jogadores por sala
     selectAvailableRoom(p5, () => {
@@ -122,7 +121,8 @@ function setupFirebase() {
         position: { x: start.x, y: start.y - 10, z: start.z },
         rotationY: 0,
         speed: 0,
-        laps: 0
+        laps: 0,
+        carType: car.carType // <-- Salva o tipo do carro no banco
     };
     set(carRef, initialCar);
 
@@ -143,8 +143,8 @@ function updateMyCar() {
         rotationY: car.rotation.y,
         speed: car.speed,
         laps: car.laps,
-        // driftFactor pode ser undefined se não existir na classe Car
-        driftFactor: typeof car.driftFactor === "number" ? car.driftFactor : 0
+        driftFactor: typeof car.driftFactor === "number" ? car.driftFactor : 0,
+        carType: car.carType // <-- Atualiza o tipo do carro no banco
     }).catch((err) => {
         // Log detalhado para depuração
         console.error("Erro ao salvar carro no Firebase:", err, {
@@ -250,7 +250,21 @@ export function draw(p5) {
         const data = otherCars[id];
         if (!data || !data.position) continue;
 
-        const tempCar = new BaseCar(
+        // Instancia o carro correto de acordo com o tipo salvo no banco
+        let RemoteCarClass = McQueen;
+        switch (data.carType) {
+            case "ORei":
+                RemoteCarClass = ORei;
+                break;
+            case "ChickHicks":
+                RemoteCarClass = ChickHicks;
+                break;
+            case "McQueen":
+            default:
+                RemoteCarClass = McQueen;
+        }
+
+        const tempCar = new RemoteCarClass(
             data.position.x,
             data.position.y,
             data.position.z,
@@ -266,6 +280,7 @@ export function draw(p5) {
         tempCar.speed = data.speed || 0;
         tempCar.laps = data.laps || 0;
         tempCar.driftFactor = data.driftFactor || 0;
+        tempCar.name = data.name || ("Player " + id.substring(0, 5));
 
         tempCar.display(graphics3D);
     }

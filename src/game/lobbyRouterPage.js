@@ -22,7 +22,7 @@ export default function LobbyRouterPage({ onStart, userId, p5 }) {
     const handleCarChosen = (chosenCarClass) => {
         setCarClass(chosenCarClass);
         // Avança para o jogo, passando o roomId e a classe do carro escolhido
-        if (onStart) onStart(roomId, chosenCarClass);
+        if (onStart) onStart(roomId, chosenCarClass); // <-- Passe roomId e carro
     };
 
     switch (view) {

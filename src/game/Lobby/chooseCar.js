@@ -72,7 +72,7 @@ export function ChooseCar({onConfirm, onBack , p5}) {
                         )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <h2>Escolha a cor do seu carro</h2>
+                        <h2>Escolha o seu Carro</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <button onClick={() => setSelectedCar("McQueen")}>McQueen</button>
                             <button onClick={() => setSelectedCar("ORei")}>O Rei</button>
