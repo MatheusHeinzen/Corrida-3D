@@ -1,5 +1,8 @@
 export class BaseCar {
     constructor(x, y, z, p5, playerId = null) {
+        if (!p5) {
+            throw new Error("O parâmetro 'p5' é obrigatório para BaseCar. Certifique-se de passar o p5 da sketch.");
+        }
         this.p5 = p5;
         this.pos = p5.createVector(x || 0, y || 0, z || 0);
         this.velocity = p5.createVector(0, 0, 0);

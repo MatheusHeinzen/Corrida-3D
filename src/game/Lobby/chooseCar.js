@@ -3,7 +3,7 @@ import { CarPreview } from './carPreview';
 import { McQueen, ORei, ChickHicks } from '../car';
 import './lobby.css';
 
-export function ChooseCar({ carColor, setCarColor, onConfirm, onBack }) {
+export function ChooseCar({onConfirm, onBack , p5}) {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
 
@@ -20,7 +20,7 @@ export function ChooseCar({ carColor, setCarColor, onConfirm, onBack }) {
 
         setIsPlaying(!isPlaying);
     };
-    const [selectedCarClass, setSelectedCarClass] = useState(McQueen);
+    const [selectedCarClass, setSelectedCarClass] = useState(null);
 
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -57,17 +57,21 @@ export function ChooseCar({ carColor, setCarColor, onConfirm, onBack }) {
                     <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
                 </audio>
 
-                <div style={{ display: 'flex', gap: 100, }}>
-
+                <div style={{ display: 'flex', gap: 100 }}>
                     <div style={{ scale: 2, top: 156, position: 'relative', zIndex: 2 }}>
-                        <CarPreview carClass={new selectedCarClass()} color={carColor} />
+                        {selectedCarClass && (
+                            <CarPreview
+                                carClass={selectedCarClass}
+                                p5={p5}
+                            />
+                        )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <h2>Escolha a cor do seu carro</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, }}>
-                            <button onClick={() => setSelectedCarClass(McQueen)}>McQueen</button>
-                            <button onClick={() => setSelectedCarClass(ORei)}>O Rei</button>
-                            <button onClick={() => setSelectedCarClass(ChickHicks)}>Chick Hicks</button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <button onClick={() => setSelectedCarClass(() => McQueen)}>McQueen</button>
+                            <button onClick={() => setSelectedCarClass(() => ORei)}>O Rei</button>
+                            <button onClick={() => setSelectedCarClass(() => ChickHicks)}>Chick Hicks</button>
                         </div>
                     </div>
                 </div>

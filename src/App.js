@@ -10,7 +10,7 @@ function App() {
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       {!started ? (
-        <LobbyRouterPage onStart={() => setStarted(true)} />
+        <LobbyRouterPage />
       ) : (
         <Sketch setup={setup} draw={draw} />
       )}

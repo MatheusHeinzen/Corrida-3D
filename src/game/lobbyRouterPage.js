@@ -4,7 +4,7 @@ import { CreateRoom } from './Lobby/create';
 import { JoinRoom } from './Lobby/join'; // Corrija para join.js
 import { ChooseCar } from './Lobby/chooseCar'; // Corrija para ChooseCar
 
-export default function LobbyRouterPage() {
+export default function LobbyRouterPage({ p5 }) {
     const [view, setView] = useState('lobby');
     const [carColor, setCarColor] = useState({ r: 255, g: 0, b: 0 });
 
@@ -21,10 +21,9 @@ export default function LobbyRouterPage() {
         case 'car':
             return (
                 <ChooseCar
-                    carColor={carColor}
-                    setCarColor={setCarColor}
                     onConfirm={handleCarChosen}
                     onBack={() => setView('lobby')}
+                    p5={p5}
                 />
             );
         case 'lobby':
