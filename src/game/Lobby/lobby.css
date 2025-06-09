@@ -1,0 +1,100 @@
+.lobby-btn {
+    font-size: 21px;
+    padding: 12px 24px;
+    border-radius: 7px;
+    border: 0px;
+    background: #ffffffde;
+    color: #000000;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.lobby-btn:hover {
+    background: #000000;
+    color: #fff;
+    transform: scale(1.07);
+    gap: 12px;
+}
+
+.radio-control {
+    padding: 10px;
+    display: flex;
+    margin-top: 20px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    z-Index: 2;
+    gap: 15px;
+    background-color: rgba(255, 255, 255, 0.534);
+    border-radius: 10px;
+    width: 390px
+}
+
+.room-form {
+    display: flex;
+    flex-direction: column;
+    align-items:flex-start;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 600px;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.397);
+    margin-bottom: 40px;
+}
+
+.room-form input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 250px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #610101;
+}
+
+input:checked+.slider:before {
+    transform: translateX(26px);
+}

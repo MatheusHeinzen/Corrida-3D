@@ -1,12 +1,12 @@
-// App.js
 import React, { useEffect, useState } from 'react';
 import Sketch from 'react-p5';
-// Corrija os imports para apontar para o local correto dos arquivos:
-import { setup, draw } from './sketch'; // <-- estava './game/sketch'
-import { db, auth } from './firebase/firebaseConfig'; // <-- estava './firebaseConfig'
+import LobbyRouterPage from './game/lobbyRouterPage';
+import { setup, draw } from './game/sketch';
+import { db, auth } from './firebase/firebaseConfig';
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 
 function App() {
+  const [started, setStarted] = useState(false);
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
@@ -17,18 +17,15 @@ function App() {
       localStorage.setItem('car_uid', uid);
     }
     setUserId(uid);
-
-    // Remova o listener antigo de "cars" e setRemoteCarState
-    // O multiplayer agora é feito via joinRoom/syncRoom/updatePlayer em sketch.js
-
-    // ...não precisa mais do onSnapshot nem do setRemoteCarState...
   }, []);
-
-  // Não precisa mais de window.sendCarStateToFirebase
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <Sketch setup={setup} draw={draw} />
+      {!started ? (
+        <LobbyRouterPage onStart={() => setStarted(true)} userId={userId} />
+      ) : (
+        <Sketch setup={setup} draw={draw} />
+      )}
     </div>
   );
 }
