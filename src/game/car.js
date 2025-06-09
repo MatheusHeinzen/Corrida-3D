@@ -46,6 +46,16 @@ export class BaseCar {
         this.lastLapRegisterTime = 0;
         this.playerId = playerId;
         this.name = "Player " + (playerId ? playerId.substring(0, 5) : "AI");
+
+        // Áudio do motor (usando elemento <audio> igual ao lobby)
+        if (typeof window !== "undefined") {
+            this.audioElement = document.createElement("audio");
+            this.audioElement.src = "/assets/songs/SongCarLoop.mp3"; // Caminho correto!
+            this.audioElement.loop = true;
+            this.audioElement.volume = 0.1;
+            document.body.appendChild(this.audioElement);
+            this.isEnginePlaying = false;
+        }
     }
 
     update(p5, track, inputs = {}) {
@@ -195,6 +205,35 @@ export class BaseCar {
 
         const forwardVel = this.velocity.dot(forward);
         this._wheelRotation += (forwardVel / 8);
+
+        // Controle do áudio do motor (fade out ao soltar o acelerador)
+        if (this.audioElement) {
+            // Volume alvo: se acelerando, depende da marcha; se não, depende da velocidade
+            let targetVol = 0;
+            if (inputs.up) {
+                targetVol = 0.15 + 0.15 * (this.currentGear / (this.gearRatios.length - 1));
+            } else if (this.speed > 1) {
+                // Fica mais baixo conforme perde velocidade
+                targetVol = Math.max(0.05, 0.18 * (this.speed / this.maxSpeed));
+            }
+
+            // Fade suave do volume
+            this.audioElement.volume += (targetVol - this.audioElement.volume) * 0.1;
+
+            // Controle de play/pause
+            if ((inputs.up || this.speed > 1)) {
+                if (!this.isEnginePlaying) {
+                    this.audioElement.play();
+                    this.isEnginePlaying = true;
+                }
+            } else {
+                if (this.isEnginePlaying && this.audioElement.volume < 0.06) {
+                    this.audioElement.pause();
+                    this.audioElement.currentTime = 0;
+                    this.isEnginePlaying = false;
+                }
+            }
+        }
     }
 
     adjustHeightToTrack(p5, track) {
