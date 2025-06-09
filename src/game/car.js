@@ -282,9 +282,9 @@ export class BaseCar {
         pg.translate(0, 0, -this.bodySize.length / 2);
         pg.fill(40, 40, 40);
 
-        for (let x of [-8, 8]) {
+        for (let x of [-9, 9]) {
             pg.push();
-            pg.translate(x, 0, -1);
+            pg.translate(x, -4, 0);
             pg.rotateX(Math.PI / 2)
             pg.cylinder(2, 6);
             pg.pop();
