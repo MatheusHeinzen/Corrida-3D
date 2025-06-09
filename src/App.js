@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Sketch from 'react-p5';
 import LobbyRouterPage from './game/lobbyRouterPage';
-import { setup, draw } from './game/sketch';
+import { setup, draw } from '../src/sketch';
 import { db, auth } from './firebase/firebaseConfig';
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 
