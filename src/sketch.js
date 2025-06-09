@@ -52,7 +52,7 @@ export function setup(p5, canvasParentRef, passedRoomId, passedUserId, passedCar
             car = new McQueen(start.x, start.y - 10, start.z, p5, playerId);
     }
     car.name = "Player " + playerId.substring(0, 5);
-    car.carType = carClassName; // <-- Adiciona o tipo do carro
+    car.carType = carClassName;
 
     // Definir sala automaticamente para até 3 jogadores por sala
     selectAvailableRoom(p5, () => {

@@ -1,11 +1,34 @@
-import React, { useRef, useState } from 'react';
-import { CarPreview} from './carPreview';
+import React, { useRef, useState, useEffect } from 'react';
+import { CarPreview } from './carPreview';
 import { McQueen, ORei, ChickHicks } from '../car';
 import './lobby.css';
+import { getDatabase, ref, onValue } from "firebase/database";
 
 export function Lobby({ onJoin, onCreate }) {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [showRooms, setShowRooms] = useState(false);
+    const [rooms, setRooms] = useState([]);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [privateCode, setPrivateCode] = useState('');
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (showRooms) {
+            const db = getDatabase();
+            const roomsRef = ref(db, 'rooms');
+            const unsub = onValue(roomsRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                // Array de salas [{id, isPrivate, name, ...}]
+                const roomList = Object.entries(data).map(([id, value]) => ({
+                    id,
+                    ...value
+                }));
+                setRooms(roomList);
+            });
+            return () => unsub();
+        }
+    }, [showRooms]);
 
     const handleToggleAudio = () => {
         const audio = audioRef.current;
@@ -19,6 +42,30 @@ export function Lobby({ onJoin, onCreate }) {
         }
 
         setIsPlaying(!isPlaying);
+    };
+
+    const handleJoinClick = () => {
+        setShowRooms(true);
+    };
+
+    const handleRoomClick = (room) => {
+        setSelectedRoom(room);
+        setError('');
+        if (room.isPrivate) {
+            // Solicita código
+            setPrivateCode('');
+        } else {
+            // Entra direto
+            if (onJoin) onJoin(room.id);
+        }
+    };
+
+    const handlePrivateJoin = () => {
+        if (selectedRoom && selectedRoom.privateCode === privateCode) {
+            if (onJoin) onJoin(selectedRoom.id);
+        } else {
+            setError('Código incorreto!');
+        }
     };
 
     return (
