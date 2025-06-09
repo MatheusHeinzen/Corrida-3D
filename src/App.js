@@ -1,20 +1,16 @@
 // App.js
 import React, { useState } from 'react';
 import Sketch from 'react-p5';
-import { Lobby } from './game/Lobby/lobby';
+import LobbyRouterPage from './game/lobbyRouterPage'; // Importa o router
 import { setup, draw } from './game/sketch';
 
 function App() {
   const [started, setStarted] = useState(false);
 
-  const handleStart = () => {
-    setStarted(true);
-  };
-
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       {!started ? (
-        <Lobby onStart={handleStart} />
+        <LobbyRouterPage onStart={() => setStarted(true)} />
       ) : (
         <Sketch setup={setup} draw={draw} />
       )}

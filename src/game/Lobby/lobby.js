@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { CarPreview } from './carPreview';
+import { CarPreview} from './carPreview';
+import { McQueen, ORei, ChickHicks } from '../car';
 import './lobby.css';
 
 export function Lobby({ onJoin, onCreate }) {
@@ -62,9 +63,9 @@ export function Lobby({ onJoin, onCreate }) {
                 />
 
                 <div style={{ zIndex: 2, display: 'flex', scale: 2, gap: 20, marginBottom: 20, marginTop: 20 }}>
-                    <CarPreview color={{ r: 200, g: 30, b: 30 }} />
-                    <CarPreview color={{ r: 30, g: 120, b: 200 }} />
-                    <CarPreview color={{ r: 30, g: 200, b: 80 }} />
+                    <CarPreview carClass={McQueen}/>
+                    <CarPreview carClass={ChickHicks}/>
+                    <CarPreview carClass={ORei}/>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>

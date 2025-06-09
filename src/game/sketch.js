@@ -1,4 +1,4 @@
-import { Car } from './car';
+import { BaseCar, McQueen } from './car';
 import { generateTerrain } from './terrain';
 
 let car;
@@ -20,7 +20,7 @@ export function setup(p5, canvasParentRef) {
     const terrainY = terrain[centerX][centerY];
 
     // Inicializa carro (posição X, Y, Z)
-    car = new Car(0, terrainY + 1, 0, p5); // 15 para garantir que fique acima do solo
+    car = new McQueen(0, terrainY + 1, 0, p5); // 15 para garantir que fique acima do solo
 }
 
 export function draw(p5) {

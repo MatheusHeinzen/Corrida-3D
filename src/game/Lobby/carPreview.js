@@ -1,19 +1,20 @@
 import React, { useRef } from 'react';
 import Sketch from 'react-p5';
-import { Car } from '../car';
-
-export function CarPreview({ color }) {
+import { McQueen, ChickHicks, ORei } from '../car';
+export function CarPreview({ carClass, color }) {
   const rotationRef = useRef(0);
   const carRef = useRef(null);
 
   const setup = (p5, canvasParentRef) => {
     p5.createCanvas(100, 100, p5.WEBGL).parent(canvasParentRef);
-    carRef.current = new Car(0, 0, 0, p5);
-    carRef.current.color = color;
+
+ // Instancia o carro correto
+    carRef.current = new carClass(0, 0, 0, p5);
+    if (color) carRef.current.color = color;
   };
 
   const draw = (p5) => {
-    p5.background(0, 0, 0, 0); // Não use clear junto
+    p5.background(0, 0, 0, 0); // Fundo transparente
     p5.noStroke();
 
     p5.ambientLight(150);
@@ -23,9 +24,8 @@ export function CarPreview({ color }) {
 
     const car = carRef.current;
     if (car) {
-      car.color = color;
       car.rotation.y = rotationRef.current;
-      p5.rotateX(Math.PI); // Inclina a visão para baixo
+      p5.rotateX(Math.PI); 
       car.display(p5);
     }
   };
