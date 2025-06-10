@@ -1,18 +1,14 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { CarPreview } from './carPreview';
-import { McQueen, ORei, ChickHicks } from '../car';
-import './lobby.css';
-import { getDatabase, ref, onValue } from "firebase/database";
+import React, { useEffect, useRef, useState } from 'react';
+import { getDatabase, ref, onValue, set } from "firebase/database";
+import { RaceStartSequence } from '../raceStart';
 
-export function Lobby({ onJoin, onCreate }) {
+export function WaitRoom({ roomId, userId, onStart }) {
+    const [players, setPlayers] = useState([]);
+    const [starting, setStarting] = useState(false);
+    const [startSignal, setStartSignal] = useState(false);
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-    const [showRooms, setShowRooms] = useState(false);
-    const [rooms, setRooms] = useState([]);
-    const [selectedRoom, setSelectedRoom] = useState(null);
-    const [privateCode, setPrivateCode] = useState('');
-    const [error, setError] = useState('');
 
     const playlist = [
         { title: "Smooth Operator", src: "/assets/songs/Sade - Smooth Operator.mp3" },
@@ -28,83 +24,90 @@ export function Lobby({ onJoin, onCreate }) {
         { title: "WOOPS", src: "/assets/songs/WOOPS.mp3" }
     ];
 
-    useEffect(() => {
-        if (showRooms) {
-            const db = getDatabase();
-            const roomsRef = ref(db, 'rooms');
-            const unsub = onValue(roomsRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                // Array de salas [{id, isPrivate, name, ...}]
-                const roomList = Object.entries(data).map(([id, value]) => ({
-                    id,
-                    ...value
-                }));
-                setRooms(roomList);
-            });
-            return () => unsub();
-        }
-    }, [showRooms]);
-
+    // Música (igual chooseCar.js)
     const handleToggleAudio = () => {
         const audio = audioRef.current;
         if (!audio) return;
-
         if (isPlaying) {
             audio.pause();
         } else {
-            audio.volume = 0.01;
+            audio.volume = 0.1;
             audio.play();
         }
-
         setIsPlaying(!isPlaying);
     };
 
     const handleNextTrack = () => {
         const nextIndex = (currentTrackIndex + 1) % playlist.length;
         setCurrentTrackIndex(nextIndex);
-        setIsPlaying(true); // Auto-play quando muda de música
-        
-        // Força a atualização da fonte de áudio
+        setIsPlaying(true);
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current.load();
-            audioRef.current.play().catch(e => console.log("Auto-play prevented", e));
+            audioRef.current.play().catch(e => {});
         }
     };
 
-    // Atualiza a fonte de áudio quando a música muda
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.load();
             if (isPlaying) {
-                audioRef.current.play().catch(e => console.log("Auto-play prevented", e));
+                audioRef.current.play().catch(e => {});
             }
         }
     }, [currentTrackIndex]);
 
-    const handleJoinClick = () => {
-        setShowRooms(true);
+    // Firebase: escuta jogadores e startSignal
+    useEffect(() => {
+        const db = getDatabase();
+        const playersRef = ref(db, `rooms/${roomId}/players`);
+        const startRef = ref(db, `rooms/${roomId}/startSignal`);
+
+        const unsubPlayers = onValue(playersRef, (snap) => {
+            const val = snap.val() || {};
+            // Corrige contagem: só conta objetos válidos
+            const arr = Object.entries(val)
+                .filter(([id, data]) => data && typeof data === 'object')
+                .map(([id, data]) => ({
+                    id,
+                    name: data.name || ("Player " + id.substring(0, 5))
+                }));
+            setPlayers(arr);
+        });
+
+        const unsubStart = onValue(startRef, (snap) => {
+            if (snap.val() === true) {
+                setStartSignal(true);
+            }
+        });
+
+        return () => {
+            unsubPlayers();
+            unsubStart();
+        };
+    }, [roomId]);
+
+    // Qualquer um pode começar
+    const handleStart = async () => {
+        if (starting || startSignal) return;
+        setStarting(true);
+        const db = getDatabase();
+        await set(ref(db, `rooms/${roomId}/startSignal`), true);
     };
 
-    const handleRoomClick = (room) => {
-        setSelectedRoom(room);
-        setError('');
-        if (room.isPrivate) {
-            // Solicita código
-            setPrivateCode('');
-        } else {
-            // Entra direto
-            if (onJoin) onJoin(room.id);
-        }
+    // Quando startSignal, mostra luzes e chama onStart ao final
+    const handleLightsEnd = () => {
+        if (onStart) onStart();
     };
 
-    const handlePrivateJoin = () => {
-        if (selectedRoom && selectedRoom.privateCode === privateCode) {
-            if (onJoin) onJoin(selectedRoom.id);
-        } else {
-            setError('Código incorreto!');
-        }
-    };
+    // Só mostra a RaceStartSequence quando startSignal for true
+    if (startSignal) {
+        return (
+            <div style={{ width: '100vw', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
+                <RaceStartSequence onStart={handleLightsEnd} />
+            </div>
+        );
+    }
 
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -123,8 +126,7 @@ export function Lobby({ onJoin, onCreate }) {
                     zIndex: 0,
                 }}
             />
-            
-            {/* Conteúdo por cima */}
+            {/* Conteúdo */}
             <div
                 style={{
                     position: 'relative',
@@ -158,29 +160,36 @@ export function Lobby({ onJoin, onCreate }) {
                     <source src={playlist[currentTrackIndex].src} type="audio/mpeg" />
                     Seu navegador não suporta o elemento de áudio.
                 </audio>
-
-                <img
-                    src="/assets/imgs/title.png"
-                    alt="Título"
-                    style={{ width: 500, marginBottom: 10 }}
-                />
-
-                <div style={{ zIndex: 2, display: 'flex', scale: 2, gap: 20, marginBottom: 20, marginTop: 20 }}>
-                    <CarPreview carClass={McQueen}/>
-                    <CarPreview carClass={ChickHicks}/>
-                    <CarPreview carClass={ORei}/>
+                <h2 style={{ margin: 30 }}>Sala de Espera</h2>
+                <div style={{
+                    background: 'rgba(0,0,0,0.5)',
+                    borderRadius: 16,
+                    padding: 24,
+                    minWidth: 320,
+                    marginBottom: 24
+                }}>
+                    <h3>Jogadores ({players.length}/3):</h3>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {players.map(p => (
+                            <li key={p.id} style={{
+                                fontWeight: p.id === userId ? 'bold' : 'normal',
+                                color: p.id === userId ? '#ffd700' : 'white',
+                                marginBottom: 8
+                            }}>
+                                {p.name}
+                                {p.id === userId ? " (Você)" : ""}
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                    <button className='lobby-btn' onClick={onJoin}>
-                        Encontrar Sala
-                    </button>
-                    <button className='lobby-btn' onClick={onCreate}>
-                        Criar Sala
-                    </button>
-                </div>
-
-                
+                <button
+                    className='lobby-btn'
+                    style={{ fontSize: 22, padding: '10px 40px', marginTop: 10 }}
+                    onClick={handleStart}
+                    disabled={starting}
+                >
+                    Começar
+                </button>
             </div>
         </div>
     );
