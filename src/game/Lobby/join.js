@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue } from "firebase/database";
 
-export function JoinRoom({ onContinue }) {
+export function JoinRoom({ onContinue, onBack }) {
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [privateCode, setPrivateCode] = useState('');
@@ -77,7 +77,7 @@ export function JoinRoom({ onContinue }) {
                         {rooms.length === 0 && <li>Nenhuma sala encontrada.</li>}
                         {rooms.map(room => (
                             <li key={room.id} style={{ margin: '10px 0' }}>
-                                <button
+                                <button className='secondary-btn'
                                     style={{ width: 200, padding: 8, cursor: 'pointer' }}
                                     onClick={() => handleRoomClick(room)}
                                 >
@@ -90,7 +90,7 @@ export function JoinRoom({ onContinue }) {
                     {/* Se selecionou uma sala privada, pede o código */}
                     {selectedRoom && selectedRoom.isPrivate && (
                         <div style={{ marginTop: 20 }}>
-                            <input
+                            <input className="code" 
                                 type="text"
                                 placeholder="Código da sala"
                                 value={privateCode}
@@ -100,6 +100,9 @@ export function JoinRoom({ onContinue }) {
                             {error && <div style={{ color: 'red' }}>{error}</div>}
                         </div>
                     )}
+                </div>
+                <div style={{ display: 'flex', gap: 10, zIndex: 2, marginTop: 20 }}>
+                    <button className='lobby-btn' onClick={onBack}>Voltar</button>
                 </div>
             </div>
         </div>

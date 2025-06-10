@@ -99,6 +99,20 @@ export function Lobby({ onJoin, onCreate }) {
                     height: '100%',
                 }}
             >
+                <div className='radio-control'>
+                    <img
+                        src={isPlaying ? '/assets/imgs/pause.png' : '/assets/imgs/play.png'}
+                        style={{ width: 40, cursor: 'pointer' }}
+                        onClick={handleToggleAudio}
+                        alt="Play/Pause"
+                    />
+                    <img
+                        src='/assets/imgs/next.png'
+                        style={{ width: 50, height: 50, cursor: 'pointer' }}
+                        onClick={handleToggleAudio}
+                        alt="Next"
+                    />
+                </div>
                 <audio ref={audioRef} loop>
                     <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
                 </audio>
@@ -124,20 +138,7 @@ export function Lobby({ onJoin, onCreate }) {
                     </button>
                 </div>
 
-                <div className='radio-control'>
-                    <img
-                        src={isPlaying ? '/assets/imgs/pause.png' : '/assets/imgs/play.png'}
-                        style={{ width: 60, cursor: 'pointer' }}
-                        onClick={handleToggleAudio}
-                        alt="Play/Pause"
-                    />
-                    <img
-                        src='/assets/imgs/next.png'
-                        style={{ width: 70, height: 50, cursor: 'pointer' }}
-                        onClick={handleToggleAudio}
-                        alt="Next"
-                    />
-                </div>
+                
             </div>
         </div>
     );

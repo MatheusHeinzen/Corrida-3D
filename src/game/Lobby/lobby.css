@@ -21,14 +21,17 @@
     padding: 10px;
     display: flex;
     margin-top: 20px;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    text-align: flex-start;
     align-items: center;
     z-Index: 2;
-    gap: 15px;
-    background-color: rgba(255, 255, 255, 0.534);
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0);
     border-radius: 10px;
-    width: 390px
+    width: 200px;
+    position: absolute;
+    top: -20px;
+    left: 5px
 }
 
 .room-form {
@@ -52,6 +55,32 @@
     max-width: 250px;
     border: 1px solid #ccc;
     font-size: 15px;
+}
+
+.code{
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    max-width: 180px;
+    margin-right: 19px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+.secondary-btn {
+    font-size: 15px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 1px solid #573838;
+    background: #775757de;
+    color: #ffffff;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+.secondary-btn:hover {
+    background: #573838;
+    color: #fff;
+    transform: scale(1.05);
 }
 
 .switch {

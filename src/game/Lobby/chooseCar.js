@@ -74,9 +74,9 @@ export function ChooseCar({onConfirm, onBack , p5}) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <h2>Escolha o seu Carro</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <button onClick={() => setSelectedCar("McQueen")}>McQueen</button>
-                            <button onClick={() => setSelectedCar("ORei")}>O Rei</button>
-                            <button onClick={() => setSelectedCar("ChickHicks")}>Chick Hicks</button>
+                            <button className='secondary-btn' onClick={() => setSelectedCar("McQueen")}>McQueen</button>
+                            <button className='secondary-btn' onClick={() => setSelectedCar("ORei")}>O Rei</button>
+                            <button className='secondary-btn' onClick={() => setSelectedCar("ChickHicks")}>Chick Hicks</button>
                         </div>
                     </div>
                 </div>
@@ -96,13 +96,13 @@ export function ChooseCar({onConfirm, onBack , p5}) {
                 <div className='radio-control'>
                     <img
                         src={isPlaying ? '/assets/imgs/pause.png' : '/assets/imgs/play.png'}
-                        style={{ width: 60, cursor: 'pointer' }}
+                        style={{ width: 40, cursor: 'pointer' }}
                         onClick={handleToggleAudio}
                         alt="Play/Pause"
                     />
                     <img
                         src='/assets/imgs/next.png'
-                        style={{ width: 70, height: 50, cursor: 'pointer' }}
+                        style={{ width: 50, height: 50, cursor: 'pointer' }}
                         onClick={handleToggleAudio}
                         alt="Next"
                     />
