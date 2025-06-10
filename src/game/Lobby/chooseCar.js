@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { CarPreview } from './carPreview';
 import { McQueen, ORei, ChickHicks } from '../car';
 import './lobby.css';
@@ -7,6 +7,21 @@ export function ChooseCar({ onConfirm, onBack, p5 }) {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [selectedCar, setSelectedCar] = useState(null);
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+
+    const playlist = [
+        { title: "Smooth Operator", src: "/assets/songs/Sade - Smooth Operator.mp3" },
+        { title: "Life is a Highway", src: "/assets/songs/Life is a Highway.mp3" },
+        { title: "Real Gone", src: "/assets/songs/Real Gone by Sheryl Crow.mp3" },
+        { title: "Sh-Boom", src: "/assets/songs/Sh-Boom.mp3" },
+        { title: "Riders on The Storm", src: "/assets/songs/Snoop Dogg feat. The Doors - Riders on the Storm.mp3" },
+        { title: "Tokyo Drift", src: "/assets/songs/Tokyo Drift.mp3" },
+        { title: "Shut Up and Drive", src: "/assets/songs/Rihanna - Shut Up and Drive.mp3" },
+        { title: "Get Low", src: "/assets/songs/Get Low.mp3" },
+        { title: "Pump It", src: "/assets/songs/Pump It.mp3" },
+        { title: "Act a Fool", src: "/assets/songs/Ludacris - Act a Fool.mp3" },
+        { title: "WOOPS", src: "/assets/songs/WOOPS.mp3" }
+    ];
 
     const handleToggleAudio = () => {
         const audio = audioRef.current;
@@ -14,11 +29,32 @@ export function ChooseCar({ onConfirm, onBack, p5 }) {
         if (isPlaying) {
             audio.pause();
         } else {
-            audio.volume = 0.1;
+            audio.volume = 0.01;
             audio.play();
         }
         setIsPlaying(!isPlaying);
     };
+
+    const handleNextTrack = () => {
+        const nextIndex = (currentTrackIndex + 1) % playlist.length;
+        setCurrentTrackIndex(nextIndex);
+        setIsPlaying(true);
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.load();
+            audioRef.current.play().catch(e => {});
+        }
+    };
+
+    // Atualiza a fonte de áudio quando a música muda
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.load();
+            if (isPlaying) {
+                audioRef.current.play().catch(e => {});
+            }
+        }
+    }, [currentTrackIndex]);
 
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -51,8 +87,26 @@ export function ChooseCar({ onConfirm, onBack, p5 }) {
                     height: '100%',
                 }}
             >
+                <div className='radio-control'>
+                    <img
+                        src={isPlaying ? '/assets/imgs/pause.png' : '/assets/imgs/play.png'}
+                        style={{ width: 40, cursor: 'pointer' }}
+                        onClick={handleToggleAudio}
+                        alt="Play/Pause"
+                    />
+                    <img
+                        src='/assets/imgs/next.png'
+                        style={{ width: 50, height: 50, cursor: 'pointer' }}
+                        onClick={handleNextTrack}
+                        alt="Next"
+                    />
+                    <span style={{ color: 'white', marginLeft: '10px' }}>
+                        {playlist[currentTrackIndex].title}
+                    </span>
+                </div>
                 <audio ref={audioRef} loop>
-                    <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
+                    <source src={playlist[currentTrackIndex].src} type="audio/mpeg" />
+                    Seu navegador não suporta o elemento de áudio.
                 </audio>
 
                 <div style={{ display: 'flex', gap: 100 }}>
@@ -88,21 +142,6 @@ export function ChooseCar({ onConfirm, onBack, p5 }) {
                     </button>
                     <button className='lobby-btn' onClick={onBack}>Voltar</button>
                 </div>
-            </div>
-
-            <div className='radio-control'>
-                <img
-                    src={isPlaying ? '/assets/imgs/pause.png' : '/assets/imgs/play.png'}
-                    style={{ width: 40, cursor: 'pointer' }}
-                    onClick={handleToggleAudio}
-                    alt="Play/Pause"
-                />
-                <img
-                    src='/assets/imgs/next.png'
-                    style={{ width: 50, height: 50, cursor: 'pointer' }}
-                    onClick={handleToggleAudio}
-                    alt="Next"
-                />
             </div>
         </div>
     );

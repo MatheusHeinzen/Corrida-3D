@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { getDatabase, ref, onValue, set } from "firebase/database";
+import { getDatabase, ref, onValue, set, remove } from "firebase/database";
 import { RaceStartSequence } from '../raceStart';
 
 export function WaitRoom({ roomId, userId, onStart }) {
@@ -24,14 +24,13 @@ export function WaitRoom({ roomId, userId, onStart }) {
         { title: "WOOPS", src: "/assets/songs/WOOPS.mp3" }
     ];
 
-    // Música (igual chooseCar.js)
     const handleToggleAudio = () => {
         const audio = audioRef.current;
         if (!audio) return;
         if (isPlaying) {
             audio.pause();
         } else {
-            audio.volume = 0.1;
+            audio.volume = 0.01;
             audio.play();
         }
         setIsPlaying(!isPlaying);
@@ -48,6 +47,7 @@ export function WaitRoom({ roomId, userId, onStart }) {
         }
     };
 
+    // Atualiza a fonte de áudio quando a música muda
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.load();
@@ -65,7 +65,6 @@ export function WaitRoom({ roomId, userId, onStart }) {
 
         const unsubPlayers = onValue(playersRef, (snap) => {
             const val = snap.val() || {};
-            // Corrige contagem: só conta objetos válidos
             const arr = Object.entries(val)
                 .filter(([id, data]) => data && typeof data === 'object')
                 .map(([id, data]) => ({
@@ -73,6 +72,12 @@ export function WaitRoom({ roomId, userId, onStart }) {
                     name: data.name || ("Player " + id.substring(0, 5))
                 }));
             setPlayers(arr);
+
+            // Se não há mais jogadores, remove a sala do banco
+            if (arr.length === 0) {
+                // Remove a sala inteira
+                remove(ref(db, `rooms/${roomId}`));
+            }
         });
 
         const unsubStart = onValue(startRef, (snap) => {
@@ -81,11 +86,21 @@ export function WaitRoom({ roomId, userId, onStart }) {
             }
         });
 
+        // Remove o player da sala ao sair/fechar a página
+        const playerRef = ref(db, `rooms/${roomId}/players/${userId}`);
+        const handleUnload = () => {
+            remove(playerRef);
+        };
+        window.addEventListener('beforeunload', handleUnload);
+
         return () => {
             unsubPlayers();
             unsubStart();
+            window.removeEventListener('beforeunload', handleUnload);
+            // Remove o player ao desmontar o componente
+            remove(playerRef);
         };
-    }, [roomId]);
+    }, [roomId, userId]);
 
     // Qualquer um pode começar
     const handleStart = async () => {
@@ -108,6 +123,14 @@ export function WaitRoom({ roomId, userId, onStart }) {
             </div>
         );
     }
+
+    // Adicione um botão para sair da sala e remova o player do banco ao clicar
+    const handleLeaveRoom = async () => {
+        const db = getDatabase();
+        const playerRef = ref(db, `rooms/${roomId}/players/${userId}`);
+        await remove(playerRef);
+        window.location.reload();
+    };
 
     return (
         <div style={{ height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -189,6 +212,13 @@ export function WaitRoom({ roomId, userId, onStart }) {
                     disabled={starting}
                 >
                     Começar
+                </button>
+                <button
+                    className='lobby-btn'
+                    style={{ fontSize: 18, padding: '8px 30px', marginTop: 10, background: '#c00' }}
+                    onClick={handleLeaveRoom}
+                >
+                    Sair da Sala
                 </button>
             </div>
         </div>
