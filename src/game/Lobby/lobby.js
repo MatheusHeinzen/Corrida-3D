@@ -7,11 +7,26 @@ import { getDatabase, ref, onValue } from "firebase/database";
 export function Lobby({ onJoin, onCreate }) {
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
     const [showRooms, setShowRooms] = useState(false);
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [privateCode, setPrivateCode] = useState('');
     const [error, setError] = useState('');
+
+    const playlist = [
+        { title: "Smooth Operator", src: "/assets/songs/Sade - Smooth Operator.mp3" },
+        { title: "Life is a Highway", src: "/assets/songs/Life is a Highway.mp3" },
+        { title: "Real Gone", src: "/assets/songs/Real Gone by Sheryl Crow.mp3" },
+        { title: "Sh-Boom", src: "/assets/songs/Sh-Boom.mp3" },
+        { title: "Riders on The Storm", src: "/assets/songs/Snoop Dogg feat. The Doors - Riders on the Storm.mp3" },
+        { title: "Tokyo Drift", src: "/assets/songs/Tokyo Drift.mp3" },
+        { title: "Shut Up and Drive", src: "/assets/songs/Rihanna - Shut Up and Drive.mp3" },
+        { title: "Get Low", src: "/assets/songs/Get Low.mp3" },
+        { title: "Pump It", src: "/assets/songs/Pump It.mp3" },
+        { title: "Act a Fool", src: "/assets/songs/Ludacris - Act a Fool.mp3" },
+        { title: "WOOPS", src: "/assets/songs/WOOPS.mp3" }
+    ];
 
     useEffect(() => {
         if (showRooms) {
@@ -43,6 +58,29 @@ export function Lobby({ onJoin, onCreate }) {
 
         setIsPlaying(!isPlaying);
     };
+
+    const handleNextTrack = () => {
+        const nextIndex = (currentTrackIndex + 1) % playlist.length;
+        setCurrentTrackIndex(nextIndex);
+        setIsPlaying(true); // Auto-play quando muda de música
+        
+        // Força a atualização da fonte de áudio
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.load();
+            audioRef.current.play().catch(e => console.log("Auto-play prevented", e));
+        }
+    };
+
+    // Atualiza a fonte de áudio quando a música muda
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.load();
+            if (isPlaying) {
+                audioRef.current.play().catch(e => console.log("Auto-play prevented", e));
+            }
+        }
+    }, [currentTrackIndex]);
 
     const handleJoinClick = () => {
         setShowRooms(true);
@@ -109,12 +147,16 @@ export function Lobby({ onJoin, onCreate }) {
                     <img
                         src='/assets/imgs/next.png'
                         style={{ width: 50, height: 50, cursor: 'pointer' }}
-                        onClick={handleToggleAudio}
+                        onClick={handleNextTrack}
                         alt="Next"
                     />
+                    <span style={{ color: 'white', marginLeft: '10px' }}>
+                        {playlist[currentTrackIndex].title}
+                    </span>
                 </div>
                 <audio ref={audioRef} loop>
-                    <source src="/assets/songs/Sade - Smooth Operator.mp3" type="audio/mpeg" />
+                    <source src={playlist[currentTrackIndex].src} type="audio/mpeg" />
+                    Seu navegador não suporta o elemento de áudio.
                 </audio>
 
                 <img
