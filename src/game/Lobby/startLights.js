@@ -20,13 +20,13 @@ export class StartLights {
 
         const now = p5.millis();
 
-        if (this.state === "lighting" && now - this.lastChange > 1000) {
+        if (this.state === "lighting" && now - this.lastChange > 700) {
             this.lightsOn++;
             this.lastChange = now;
 
             if (this.lightsOn === 5) {
                 this.state = "waiting";
-                this.blackoutDelay = now + p5.random(500, 900);
+                this.blackoutDelay = now + p5.random(500, 1000);
             }
         }
 
@@ -46,31 +46,34 @@ export class StartLights {
         p5.push();
         p5.translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // Caixa preta
-        p5.fill(0);
-        p5.box(260, 80, 10);
+        // Luz ambiente e fonte de luz
+        p5.ambientLight(100);
+        p5.pointLight(255, 255, 255, 0, 0, 200);
+
+        // Caixa preta central com aparência "arredondada"
+        p5.fill(70);
+        p5.noStroke();
+        p5.box(180, 60, 8); 
 
         // Luzes
         for (let i = 0; i < 5; i++) {
             p5.push();
-            p5.translate(-100 + i * 50, 0, 10);
+            p5.translate(-72 + i * 36, 0, 10);
 
             if (this.state === "green") {
-                p5.fill(0, 255, 0);
+                p5.ambientMaterial(0, 255, 0);
             } else if (this.state === "blackout") {
-                p5.fill(40);
+                p5.ambientMaterial(50);
             } else if (i < this.lightsOn) {
-                p5.fill(255, 0, 0);
+                p5.ambientMaterial(255, 0, 0);
             } else {
-                p5.fill(40);
+                p5.ambientMaterial(50);
             }
 
-            p5.sphere(15); // Esfera para parecer mais realista
+            p5.sphere(10); 
             p5.pop();
         }
 
         p5.pop();
     }
 }
-
-
