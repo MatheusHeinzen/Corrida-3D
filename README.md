@@ -1,6 +1,8 @@
 # 🏆 - Rust-eze Racer
 
+
 ![Rust-eze Racer Logo](public\assets\imgs\title.png)
+
 
 ## 🚀 Visão Geral
 **Rust-eze Racer** é um jogo de corrida multiplayer 3D desenvolvido em p5.js, inspirado no universo automotivo de filmes como *Carros* e franquias como *Need for Speed*. O jogo oferece uma experiência de corrida dinâmica com sistema de voltas em uma pista principal, lobby interativo e suporte a multiplayer via Firebase. Desenvolvido como projeto acadêmico para a disciplina de **Canvas e Games**, o jogo combina elementos de design, física e programação em tempo real.
@@ -31,6 +33,7 @@
 
 ---
 
+
 ## 📥 Se quiser testar o jogo:
 1. **Abra o link:** https://rust-eze-racer.web.app/
 
@@ -43,6 +46,7 @@
    - **S** - Frear
    - **A** - Virar para a Esquerda
    - **D** - Virar para a Direita
+
 
 ---
 
