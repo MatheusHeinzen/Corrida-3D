@@ -191,7 +191,7 @@ export function WaitRoom({ roomId, userId, onStart }) {
                     minWidth: 320,
                     marginBottom: 24
                 }}>
-                    <h3>Jogadores ({players.length}/3):</h3>
+                    <h3>Aperte em "Começar" quando estiver pronto.</h3>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {players.map(p => (
                             <li key={p.id} style={{
