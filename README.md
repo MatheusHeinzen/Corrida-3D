@@ -1,7 +1,7 @@
 # 🏆 - Rust-eze Racer
 
 
-![Rust-eze Racer Logo](public\assets\imgs\title.png)
+![Rust-eze Racer Logo](public/assets/imgs/title.png)
 
 
 ## 🚀 Visão Geral
