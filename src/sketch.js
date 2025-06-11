@@ -23,9 +23,9 @@ function getOrCreatePlayerId() {
 
 export function setup(p5, canvasParentRef, passedRoomId, passedUserId, passedCarClass) {
     font = p5.loadFont(process.env.PUBLIC_URL + '/SuperBlackMarker.ttf');
-    const canvas = p5.createCanvas(854, 480).parent(canvasParentRef);
+    const canvas = p5.createCanvas(p5.windowWidth, p5.windowHeight).parent(canvasParentRef);
 
-    graphics3D = p5.createGraphics(854, 480, p5.WEBGL);
+    graphics3D = p5.createGraphics(p5.windowWidth, p5.windowHeight, p5.WEBGL);
 
     track = createInterlagosLight(graphics3D);
 
@@ -381,13 +381,17 @@ export function windowResized(p5) {
 // Não precisa mais de keyPressed, controles são via getInputs
 
 function drawMinimap(p5, track, car, otherCars) {
-    const minimapSize = 200;
+    // Responsivo: tamanho proporcional à tela, mas com limites
+    const minimapSize = Math.max(140, Math.min(220, Math.floor(Math.min(p5.width, p5.height) * 0.22)));
+    console.log("Tamanho do minimapa:", minimapSize);
     const padding = 20;
-    const scale = 0.003;
+    const scale = minimapSize * 0.00003;
+    const offsetX = p5.width - minimapSize - minimapSize * 0.2 +  padding;
+    const offsetY = p5.height - minimapSize - minimapSize * 3 - padding;
 
-    const offsetX = p5.width - minimapSize + 80 - padding;
-    const offsetY = p5.height - minimapSize - 180 - padding;
+    p5.push();
 
+    // Traçado da pista
     p5.stroke(255);
     p5.noFill();
     p5.beginShape();
@@ -402,7 +406,8 @@ function drawMinimap(p5, track, car, otherCars) {
     const carX = offsetX + car.pos.x * scale;
     const carY = offsetY + car.pos.z * scale;
     p5.fill(255, 0, 0);
-    p5.circle(carX, carY, 8);
+    p5.noStroke();
+    p5.circle(carX, carY, 10);
 
     // Carros remotos
     for (const id in otherCars) {
@@ -411,8 +416,9 @@ function drawMinimap(p5, track, car, otherCars) {
         const rX = offsetX + oc.position.x * scale;
         const rY = offsetY + oc.position.z * scale;
         p5.fill(0, 180, 255);
-        p5.circle(rX, rY, 8);
+        p5.circle(rX, rY, 10);
     }
+    p5.pop();
 }
 
 // Captura inputs do teclado
