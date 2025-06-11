@@ -93,7 +93,6 @@
 .open-popup-btn{
     position: fixed;
     bottom: 120px;
-                        /* right: '50%', */
     padding: 10px 20px;
     background-color: rgba(153, 42, 42, 0.54);
     color: white;

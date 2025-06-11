@@ -301,6 +301,7 @@ export function Lobby({ onJoin, onCreate }) {
                         <p style={{ marginBottom: 15, lineHeight: 1.6 }}>
                             Mostre suas habilidades no volante, desafie seus amigos e conquiste o topo do pódio!
                         </p>
+                        <p style={{textAlign: 'end'}}><i>Made by Matheus & Bruna</i></p>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>

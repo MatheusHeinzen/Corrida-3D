@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getDatabase, ref, set } from "firebase/database";
 
-export function CreateRoom({ onContinue }) {
+export function CreateRoom({ onContinue, onBack }) {
     const [isPrivate, setIsPrivate] = useState(false);
     const [roomName, setRoomName] = useState('');
     const [roomCode, setRoomCode] = useState('');
@@ -94,9 +94,13 @@ export function CreateRoom({ onContinue }) {
                             <span>{isPrivate ? 'Privada' : 'Pública'}</span>
                         </div>
                     </form>
-                    <button className='lobby-btn' onClick={handleSubmit}>Criar Sala</button>
-                    {error && <div style={{ color: 'red', marginTop: 10 }}>{error}</div>}
+                    <div style={{ display: 'flex', zIndex: 2 }}>
+                        <button style={{ marginRight: 60 }} className='lobby-btn' onClick={onBack}>Voltar</button>
+                        <button className='lobby-btn' onClick={handleSubmit}>Criar Sala</button>
+                        {error && <div style={{ color: 'red', marginTop: 10 }}>{error}</div>}
+                    </div>
                 </div>
+
             </div>
         </div>
     );

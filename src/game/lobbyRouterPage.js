@@ -34,9 +34,9 @@ export default function LobbyRouterPage({ onStart, userId, p5 }) {
 
     switch (view) {
         case 'create':
-            return <CreateRoom onContinue={handleCreateRoom} />;
+            return <CreateRoom onContinue={handleCreateRoom} onBack={() => setView('lobby')}/>;
         case 'join':
-            return <JoinRoom onContinue={handleJoinRoom} />;
+            return <JoinRoom onContinue={handleJoinRoom} onBack={() => setView('lobby')}/>;
         case 'car':
             // Se já escolheu o carro, vai para sala de espera
             if (waitReady) {
